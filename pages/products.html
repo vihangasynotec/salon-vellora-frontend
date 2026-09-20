@@ -1,0 +1,130 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salon Products — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <div id="app-sidebar-placeholder"></div>
+
+    <main class="app-main">
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h2 style="font-size:1.3rem;font-weight:700;">Salon Products & Retail Inventory</h2>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin:0;">Shampoos, conditioners, styling serums, cosmetics and beauty products</p>
+          </div>
+          <button class="btn-primary-custom" onclick="openProductModal()" data-permission="inventory.create">
+            <i data-lucide="plus-circle"></i> Add Product
+          </button>
+        </div>
+
+        <div class="table-custom-container">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Brand</th>
+                <th>SKU</th>
+                <th>Barcode</th>
+                <th>Cost Price</th>
+                <th>Retail Price</th>
+                <th>Stock</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="products-table-body">
+              <tr><td colspan="9" style="text-align:center;padding:3rem;color:var(--text-muted);">Loading products...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- PRODUCT CREATE / EDIT MODAL -->
+  <div class="modal-overlay" id="product-modal">
+    <div class="modal-card" style="max-width: 500px;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean" id="product-modal-title">Add Salon Product</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeProductModal()"><i data-lucide="x"></i></button>
+      </div>
+      <form onsubmit="handleSaveProduct(event)">
+        <div class="modal-body-custom">
+          <input type="hidden" id="p-id">
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Product Name *</label>
+            <input type="text" id="p-name" class="form-control-custom" required placeholder="e.g. L'Oréal Serie Expert Absolut Repair 500ml">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Category</label>
+              <input type="text" id="p-cat" class="form-control-custom" placeholder="e.g. Hair Care">
+            </div>
+            <div>
+              <label class="form-label-custom">Brand</label>
+              <input type="text" id="p-brand" class="form-control-custom" placeholder="e.g. L'Oréal">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">SKU Code</label>
+              <input type="text" id="p-sku" class="form-control-custom" placeholder="e.g. LOR-ABS-500">
+            </div>
+            <div>
+              <label class="form-label-custom">Barcode</label>
+              <input type="text" id="p-barcode" class="form-control-custom" placeholder="e.g. 790011223301">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Cost Price (LKR) *</label>
+              <input type="number" id="p-cost" class="form-control-custom" required min="0" value="0">
+            </div>
+            <div>
+              <label class="form-label-custom">Retail Price (LKR) *</label>
+              <input type="number" id="p-retail" class="form-control-custom" required min="0" value="0">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+              <label class="form-label-custom">Initial Stock Quantity</label>
+              <input type="number" id="p-stock" class="form-control-custom" value="10" min="0">
+            </div>
+            <div>
+              <label class="form-label-custom">Low Stock Alert Level</label>
+              <input type="number" id="p-alert" class="form-control-custom" value="5" min="1">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer-custom">
+          <button type="button" class="btn-secondary-custom" onclick="closeProductModal()">Cancel</button>
+          <button type="submit" id="btn-save-prod" class="btn-primary-custom">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/inventory.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      loadProductsPage();
+    });
+  </script>
+</body>
+</html>

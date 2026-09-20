@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS & Billing — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/pos.css">
+  <link rel="stylesheet" href="../css/print.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Sidebar Placeholder -->
+    <div id="app-sidebar-placeholder"></div>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+      <!-- Topbar Placeholder -->
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content" style="padding: 0.85rem 1.25rem; overflow: hidden;">
+        <div class="pos-layout">
+          <!-- Left: Items Catalog -->
+          <div class="pos-catalog-area">
+            <!-- Search & Type Filter -->
+            <div class="pos-search-bar">
+              <div style="flex:1; position:relative;">
+                <input type="text" id="pos-search" class="form-control-custom" placeholder="Search service, package or product barcode..." style="padding-left: 38px;" oninput="filterPosItems()">
+                <i data-lucide="search" style="position:absolute;left:12px;top:10px;width:18px;color:var(--text-light);"></i>
+              </div>
+              <button class="btn-secondary-custom" onclick="openHeldBillsModal()" title="View Held Bills">
+                <i data-lucide="pause-circle"></i> Held Bills (<span id="held-bills-count">0</span>)
+              </button>
+            </div>
+
+            <!-- Categories Tabs -->
+            <div class="pos-category-pills" id="pos-category-container">
+              <button class="category-pill active" onclick="selectCategory('all', this)">All Items</button>
+              <button class="category-pill" onclick="selectCategory('services', this)">All Services</button>
+              <button class="category-pill" onclick="selectCategory('packages', this)">Bridal Packages</button>
+              <button class="category-pill" onclick="selectCategory('products', this)">Retail Products</button>
+            </div>
+
+            <!-- Items Grid -->
+            <div class="pos-items-grid" id="pos-items-container">
+              <div style="grid-column: 1/-1; text-align:center; padding: 3rem; color: var(--text-muted);">Loading catalog...</div>
+            </div>
+          </div>
+
+          <!-- Right: Cart & Billing Panel -->
+          <div class="pos-cart-panel">
+            <div class="cart-header">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <i data-lucide="shopping-bag" style="color:var(--primary);"></i>
+                <span style="font-weight:700;font-size:1.05rem;">Current Bill</span>
+              </div>
+              <button class="btn-soft-pink" style="padding:4px 8px;font-size:0.75rem;" onclick="clearCart()">
+                <i data-lucide="trash-2" style="width:14px;"></i> Clear
+              </button>
+            </div>
+
+            <!-- Customer Selector -->
+            <div class="cart-customer-box">
+              <div style="display:flex;gap:8px;align-items:center;">
+                <select id="cart-customer-select" class="form-select-custom" style="flex:1;" onchange="onCustomerChange()">
+                  <option value="">Walk-in Client</option>
+                </select>
+                <button class="btn-secondary-custom" style="padding:0.6rem 0.8rem;" title="Quick Register Customer" onclick="openQuickCustomerModal()">
+                  <i data-lucide="user-plus" style="width:16px;"></i>
+                </button>
+              </div>
+              <div id="customer-loyalty-info" style="display:none; font-size:0.75rem; color:var(--primary-dark); font-weight:600; margin-top:4px;">
+                Loyalty Points: <span id="client-points">0</span> | Total Visits: <span id="client-visits">0</span>
+              </div>
+            </div>
+
+            <!-- Cart Items List -->
+            <div class="cart-items-list" id="cart-items-container">
+              <div style="text-align:center; padding: 4rem 1rem; color: var(--text-muted);">
+                <i data-lucide="shopping-cart" style="width:40px;height:40px;color:var(--border);margin-bottom:8px;"></i>
+                <p style="font-size:0.85rem;">Cart is empty.<br>Tap any service or product to add.</p>
+              </div>
+            </div>
+
+            <!-- Cart Summary & Checkout -->
+            <div class="cart-summary-box">
+              <div class="summary-row">
+                <span>Subtotal</span>
+                <span id="cart-subtotal">LKR 0.00</span>
+              </div>
+
+              <!-- Discount Input & Limit -->
+              <div class="summary-row" style="align-items:center;">
+                <span style="display:flex;align-items:center;gap:4px;">
+                  Discount
+                  <select id="cart-discount-type" style="font-size:0.75rem;padding:1px 4px;border:1px solid var(--border);border-radius:4px;" onchange="recalculateTotals()">
+                    <option value="fixed">LKR</option>
+                    <option value="percentage">%</option>
+                  </select>
+                </span>
+                <input type="number" id="cart-discount-val" value="0" min="0" style="width:75px;text-align:right;padding:2px 6px;border:1px solid var(--border);border-radius:4px;font-size:0.85rem;" oninput="recalculateTotals()">
+              </div>
+
+              <!-- Tax & Service Charge (Optional) -->
+              <div class="summary-row" style="font-size:0.8rem;color:var(--text-light);">
+                <span>Tax (0%)</span>
+                <span id="cart-tax">LKR 0.00</span>
+              </div>
+
+              <div class="summary-row total">
+                <span>Grand Total</span>
+                <span id="cart-grand-total" style="color:var(--primary-dark);">LKR 0.00</span>
+              </div>
+
+              <div class="cart-actions-grid">
+                <button class="btn-secondary-custom" onclick="openHoldBillModal()" style="justify-content:center;">
+                  <i data-lucide="pause"></i> Hold Bill
+                </button>
+                <button class="btn-secondary-custom" onclick="openQuotationsDrawer()" style="justify-content:center;">
+                  <i data-lucide="file-text"></i> Load Quote
+                </button>
+                <button class="btn-checkout" onclick="openPaymentModal()">
+                  <i data-lucide="check-circle-2"></i> Charge & Checkout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- PAYMENT MODAL -->
+  <div class="modal-overlay" id="payment-modal">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean">Payment & Checkout</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closePaymentModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body-custom">
+        <div style="text-align:center; padding: 1rem; background: var(--bg-main); border-radius: var(--radius-md); margin-bottom: 1.25rem;">
+          <div style="font-size:0.85rem;color:var(--text-muted);font-weight:600;">AMOUNT DUE</div>
+          <div id="modal-due-amount" style="font-size:2rem;font-weight:800;color:var(--primary-dark);">LKR 0.00</div>
+        </div>
+
+        <label class="form-label-custom">Payment Method</label>
+        <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:8px;margin-bottom:1.25rem;">
+          <button type="button" class="btn-secondary-custom active-payment-method" id="pay-method-cash" onclick="setPaymentMethod('cash', this)" style="justify-content:center;padding:0.6rem 0.2rem;">Cash</button>
+          <button type="button" class="btn-secondary-custom" id="pay-method-card" onclick="setPaymentMethod('card', this)" style="justify-content:center;padding:0.6rem 0.2rem;">Card</button>
+          <button type="button" class="btn-secondary-custom" id="pay-method-bank" onclick="setPaymentMethod('bank_transfer', this)" style="justify-content:center;padding:0.6rem 0.2rem;">Bank</button>
+          <button type="button" class="btn-secondary-custom" id="pay-method-split" onclick="setPaymentMethod('split', this)" style="justify-content:center;padding:0.6rem 0.2rem;">Split</button>
+        </div>
+
+        <div id="cash-payment-fields">
+          <label class="form-label-custom">Amount Tendered / Received</label>
+          <input type="number" id="tendered-amount" class="form-control-custom" style="font-size:1.25rem;font-weight:700;color:var(--text-main);" placeholder="0.00" oninput="calculateChange()">
+
+          <!-- Quick Cash Amount Suggestions -->
+          <div style="display:flex;gap:6px;margin-top:8px;" id="quick-cash-pills"></div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;padding:0.85rem;background:#ecfdf5;border-radius:var(--radius-md);">
+            <span style="font-weight:700;color:#065f46;">Change Due to Client:</span>
+            <span id="change-due-amount" style="font-weight:800;font-size:1.3rem;color:#059669;">LKR 0.00</span>
+          </div>
+        </div>
+
+        <div id="split-payment-fields" style="display:none;margin-top:1rem;">
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <input type="number" id="split-cash-amount" class="form-control-custom" placeholder="Cash Amount" oninput="calculateSplitChange()">
+            <input type="number" id="split-card-amount" class="form-control-custom" placeholder="Card Amount" oninput="calculateSplitChange()">
+          </div>
+        </div>
+
+        <div style="margin-top:1rem;">
+          <label class="form-label-custom">Bill Notes / References (Optional)</label>
+          <input type="text" id="bill-notes" class="form-control-custom" placeholder="e.g. Card slip reference, Bridal remarks...">
+        </div>
+      </div>
+
+      <div class="modal-footer-custom">
+        <button class="btn-secondary-custom" onclick="closePaymentModal()">Cancel</button>
+        <button class="btn-primary-custom" id="btn-process-sale" onclick="processSaleCheckout()">
+          <i data-lucide="check"></i> Confirm Payment & Complete Sale
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECEIPT & INVOICE PRINT PREVIEW MODAL -->
+  <div class="modal-overlay" id="receipt-modal">
+    <div class="modal-card" style="max-width: 580px; max-height: 95vh; display:flex; flex-direction:column;">
+      <div class="modal-header-custom no-print" style="border-bottom:1px solid var(--border); padding-bottom: 0.75rem;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:36px; height:36px; border-radius:50%; background:#dcfce7; display:flex; align-items:center; justify-content:center; color:#16a34a;">
+            <i data-lucide="check-circle" style="width:22px; height:22px;"></i>
+          </div>
+          <div>
+            <h3 class="card-title-clean" style="margin:0; font-size:1.15rem;">Sale Completed!</h3>
+            <span style="font-size:0.75rem; color:var(--text-muted);">Invoice created, payment recorded & stock deducted</span>
+          </div>
+        </div>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeReceiptModal()"><i data-lucide="x"></i></button>
+      </div>
+
+      <!-- Format Switcher Tabs -->
+      <div class="no-print" style="padding: 0.75rem 1.25rem 0; display:flex; gap:8px; background: #fff5f8; border-bottom: 1px solid #fce7ec;">
+        <button id="tab-btn-thermal" class="btn-secondary-custom" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 8px 8px 0 0; background:#fff; border-bottom-color:transparent; font-weight:700; color:var(--primary);" onclick="switchReceiptTab('thermal')">
+          <i data-lucide="receipt" style="width:15px;"></i> 80mm Thermal Receipt
+        </button>
+        <button id="tab-btn-a4" class="btn-secondary-custom" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 8px 8px 0 0; opacity: 0.8;" onclick="switchReceiptTab('a4')">
+          <i data-lucide="file-text" style="width:15px;"></i> Luxury A4 Tax Invoice
+        </button>
+      </div>
+
+      <!-- Preview Body -->
+      <div class="modal-body-custom a4-preview-scroll" style="padding: 1.25rem; background: #fdf2f5; flex:1;">
+        <div id="receipt-print-area">
+          <!-- Dynamically populated luxury receipt / invoice -->
+        </div>
+      </div>
+
+      <!-- Actions Footer -->
+      <div class="modal-footer-custom no-print" style="padding: 0.85rem 1.25rem; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; border-top:1px solid var(--border);">
+        <button class="btn-secondary-custom" onclick="closeReceiptModal()" style="font-size:0.85rem;">
+          <i data-lucide="plus"></i> New Sale
+        </button>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;" id="receipt-action-buttons">
+          <!-- Populated based on active tab -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUICK ADD CUSTOMER MODAL -->
+  <div class="modal-overlay" id="quick-customer-modal">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean">Quick Register Client</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeQuickCustomerModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body-custom">
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-custom">Full Name *</label>
+          <input type="text" id="quick-cust-name" class="form-control-custom" required placeholder="e.g. Dilini Perera">
+        </div>
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-custom">Mobile Number *</label>
+          <input type="tel" id="quick-cust-phone" class="form-control-custom" required placeholder="07XXXXXXXX">
+        </div>
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-custom">Email Address</label>
+          <input type="email" id="quick-cust-email" class="form-control-custom" placeholder="client@gmail.com">
+        </div>
+      </div>
+      <div class="modal-footer-custom">
+        <button class="btn-secondary-custom" onclick="closeQuickCustomerModal()">Cancel</button>
+        <button class="btn-primary-custom" onclick="saveQuickCustomer()">Save Client</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOLD BILL MODAL -->
+  <div class="modal-overlay" id="hold-bill-modal">
+    <div class="modal-card" style="max-width: 400px;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean">Hold Current Cart</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeHoldBillModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body-custom">
+        <label class="form-label-custom">Hold Reference Tag *</label>
+        <input type="text" id="hold-bill-reference" class="form-control-custom" placeholder="e.g. Bride Waiting, Table 2, Dilini">
+      </div>
+      <div class="modal-footer-custom">
+        <button class="btn-secondary-custom" onclick="closeHoldBillModal()">Cancel</button>
+        <button class="btn-primary-custom" onclick="confirmHoldBill()">Hold Cart</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HELD BILLS LIST MODAL -->
+  <div class="modal-overlay" id="held-bills-modal">
+    <div class="modal-card" style="max-width: 500px;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean">Held Bills List</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeHeldBillsModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body-custom" id="held-bills-list-body">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/html2pdf.bundle.min.js"></script>
+  <script src="../js/print-engine.js"></script>
+  <script src="../js/pos.js"></script>
+</body>
+</html>

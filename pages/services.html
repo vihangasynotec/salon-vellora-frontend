@@ -1,0 +1,161 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Services & Packages — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <div id="app-sidebar-placeholder"></div>
+
+    <main class="app-main">
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px;">
+          <div style="display:flex;gap:10px;flex:1;max-width:550px;">
+            <div style="flex:1;position:relative;">
+              <input type="text" id="srv-search" class="form-control-custom" placeholder="Search services by name or code..." style="padding-left:38px;" oninput="filterServices()">
+              <i data-lucide="search" style="position:absolute;left:12px;top:10px;width:18px;color:var(--text-light);"></i>
+            </div>
+            <select id="srv-cat-filter" class="form-select-custom" style="width:180px;" onchange="filterServices()">
+              <option value="">All Categories</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-secondary-custom" onclick="openPackageModal()" data-permission="services.create">
+              <i data-lucide="package-plus"></i> New Package
+            </button>
+            <button class="btn-primary-custom" onclick="openServiceModal()" data-permission="services.create">
+              <i data-lucide="plus-circle"></i> Add Service
+            </button>
+          </div>
+        </div>
+
+        <div class="table-custom-container">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Service Name</th>
+                <th>Category</th>
+                <th>Code</th>
+                <th>Price (LKR)</th>
+                <th>Duration</th>
+                <th>Status</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="services-table-body">
+              <tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text-muted);">Loading salon services...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- SERVICE CREATE / EDIT MODAL -->
+  <div class="modal-overlay" id="service-modal">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean" id="service-modal-title">Add New Service</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeServiceModal()"><i data-lucide="x"></i></button>
+      </div>
+      <form id="service-form" onsubmit="handleSaveService(event)">
+        <div class="modal-body-custom">
+          <input type="hidden" id="srv-id">
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Service Name *</label>
+            <input type="text" id="srv-name" class="form-control-custom" required placeholder="e.g. 24K Gold Bridal Facial">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Category *</label>
+              <select id="srv-cat" class="form-select-custom" required></select>
+            </div>
+            <div>
+              <label class="form-label-custom">Service Code</label>
+              <input type="text" id="srv-code" class="form-control-custom" placeholder="e.g. SV-FC-05">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Price (LKR) *</label>
+              <input type="number" id="srv-price" class="form-control-custom" required min="0">
+            </div>
+            <div>
+              <label class="form-label-custom">Duration (Minutes) *</label>
+              <input type="number" id="srv-duration" class="form-control-custom" required min="5" value="60">
+            </div>
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Service Description</label>
+            <textarea id="srv-desc" class="form-control-custom" rows="2" placeholder="Describe procedure and benefits..."></textarea>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="srv-featured" style="width:18px;height:18px;accent-color:var(--primary);">
+            <label for="srv-featured" style="font-size:0.85rem;font-weight:600;cursor:pointer;">Feature this on Public Customer Catalog</label>
+          </div>
+        </div>
+        <div class="modal-footer-custom">
+          <button type="button" class="btn-secondary-custom" onclick="closeServiceModal()">Cancel</button>
+          <button type="submit" id="btn-save-srv" class="btn-primary-custom">Save Service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- PACKAGE CREATE MODAL -->
+  <div class="modal-overlay" id="package-modal">
+    <div class="modal-card" style="max-width: 500px;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean">Create Service Package</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closePackageModal()"><i data-lucide="x"></i></button>
+      </div>
+      <form id="package-form" onsubmit="handleSavePackage(event)">
+        <div class="modal-body-custom">
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Package Name *</label>
+            <input type="text" id="pkg-name" class="form-control-custom" required placeholder="e.g. Royal Kandyan Bridal Package">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Package Price (LKR) *</label>
+              <input type="number" id="pkg-price" class="form-control-custom" required min="0">
+            </div>
+            <div>
+              <label class="form-label-custom">Total Duration (Minutes) *</label>
+              <input type="number" id="pkg-duration" class="form-control-custom" required value="240">
+            </div>
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Services Included (Select Multiple) *</label>
+            <select id="pkg-services-select" class="form-select-custom" multiple size="4" required style="height:auto;"></select>
+          </div>
+          <div>
+            <label class="form-label-custom">Package Description</label>
+            <textarea id="pkg-desc" class="form-control-custom" rows="2" placeholder="Full description for bridal brochure..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer-custom">
+          <button type="button" class="btn-secondary-custom" onclick="closePackageModal()">Cancel</button>
+          <button type="submit" id="btn-save-pkg" class="btn-primary-custom">Create Package</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/services.js"></script>
+</body>
+</html>

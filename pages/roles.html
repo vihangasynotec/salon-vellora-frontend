@@ -1,0 +1,257 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roles & Permissions — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <div id="app-sidebar-placeholder"></div>
+
+    <main class="app-main">
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h2 style="font-size:1.3rem;font-weight:700;">Role-Based Access Control (RBAC)</h2>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin:0;">Define custom roles, assign granular permissions & control frontend/backend access</p>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <a href="permissions.html" class="btn-secondary-custom">
+              <i data-lucide="key"></i> View All Permissions
+            </a>
+            <button class="btn-primary-custom" onclick="openRoleModal()" data-permission="roles.create">
+              <i data-lucide="shield-plus"></i> Create Custom Role
+            </button>
+          </div>
+        </div>
+
+        <div class="table-custom-container">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Role Name</th>
+                <th>Description</th>
+                <th>Active Users</th>
+                <th>Permission Count</th>
+                <th>Type</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="roles-table-body">
+              <tr><td colspan="6" style="text-align:center;padding:3rem;color:var(--text-muted);">Loading roles...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ROLE MODAL WITH PERMISSION CHECKBOX MATRIX -->
+  <div class="modal-overlay" id="role-modal">
+    <div class="modal-card" style="max-width: 680px; max-height: 90vh;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean" id="role-modal-title">Create Custom Role</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeRoleModal()"><i data-lucide="x"></i></button>
+      </div>
+      <form onsubmit="handleSaveRole(event)">
+        <div class="modal-body-custom">
+          <input type="hidden" id="role-id">
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Role Title *</label>
+            <input type="text" id="role-name" class="form-control-custom" required placeholder="e.g. Reception Manager, Senior Cashier">
+          </div>
+          <div style="margin-bottom:1.25rem;">
+            <label class="form-label-custom">Role Description</label>
+            <input type="text" id="role-desc" class="form-control-custom" placeholder="e.g. Front desk manager with appointment and quotation approvals...">
+          </div>
+
+          <h4 style="font-size:0.85rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;">Grant Module Permissions</h4>
+          <div id="permissions-matrix-container" style="display:flex;flex-direction:column;gap:12px;max-height:350px;overflow-y:auto;padding-right:4px;">
+            <!-- Grouped checkboxes -->
+          </div>
+        </div>
+        <div class="modal-footer-custom">
+          <button type="button" class="btn-secondary-custom" onclick="closeRoleModal()">Cancel</button>
+          <button type="submit" id="btn-save-role" class="btn-primary-custom">Save Role</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    let allRoles = [];
+    let groupedPermissions = {};
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      common.initLayout("roles", "Roles & Permissions", "Security access matrix, custom role configurations and granular permission grants");
+      await loadPermissionsMatrix();
+      await loadRoles();
+    });
+
+    async function loadPermissionsMatrix() {
+      try {
+        const res = await api.get("/permissions");
+        if (res.success && res.data) {
+          groupedPermissions = res.data;
+        }
+      } catch (e) {}
+    }
+
+    async function loadRoles() {
+      const tbody = document.getElementById("roles-table-body");
+      try {
+        const res = await api.get("/roles");
+        if (!res.success || !res.data) return;
+
+        allRoles = res.data;
+
+        tbody.innerHTML = allRoles.map(r => `
+          <tr>
+            <td>
+              <div style="font-weight:700;color:var(--text-main);">${r.display_name}</div>
+              <div style="font-family:monospace;font-size:0.75rem;color:var(--text-muted);">${r.name}</div>
+            </td>
+            <td>${r.description || '-'}</td>
+            <td><span class="badge-custom badge-info">${r.users_count || 0} users</span></td>
+            <td><b>${r.name === 'super_admin' ? 'All (*)' : (r.permissions ? r.permissions.length : 0)}</b> permissions</td>
+            <td><span class="badge-custom badge-${r.is_system ? 'primary' : 'purple'}">${r.is_system ? 'System Default' : 'Custom'}</span></td>
+            <td style="text-align:right;">
+              ${!r.is_system ? `
+              <button class="btn-secondary-custom" style="padding:4px 8px;font-size:0.75rem;" onclick="openEditRoleModal(${r.id})">
+                <i data-lucide="edit-3" style="width:14px;"></i> Edit
+              </button>
+              <button class="btn-soft-pink" style="padding:4px 8px;font-size:0.75rem;" onclick="deleteRole(${r.id})">
+                <i data-lucide="trash-2" style="width:14px;"></i>
+              </button>` : `<span style="font-size:0.75rem;color:var(--text-light);">Protected</span>`}
+            </td>
+          </tr>
+        `).join("");
+
+        if (window.lucide) lucide.createIcons();
+
+      } catch (e) {
+        common.showToast("Failed to load roles.", "error");
+      }
+    }
+
+    function renderCheckboxes(selectedIds = []) {
+      const container = document.getElementById("permissions-matrix-container");
+      let html = '';
+
+      for (const [module, perms] of Object.entries(groupedPermissions)) {
+        html += `
+          <div style="background:var(--bg-main);padding:10px 14px;border-radius:8px;border:1px solid var(--border);">
+            <div style="font-weight:700;font-size:0.82rem;color:var(--primary-dark);margin-bottom:6px;">${module} Module</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:6px;">
+              ${perms.map(p => `
+                <label style="display:flex;align-items:center;gap:6px;font-size:0.8rem;cursor:pointer;">
+                  <input type="checkbox" name="perm_check" value="${p.id}" ${selectedIds.includes(p.id) ? 'checked' : ''} style="accent-color:var(--primary);">
+                  <span>${p.display_name}</span>
+                </label>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function openRoleModal() {
+      document.getElementById("role-modal-title").innerText = "Create Custom Role";
+      document.getElementById("role-id").value = "";
+      document.getElementById("role-name").value = "";
+      document.getElementById("role-desc").value = "";
+      renderCheckboxes([]);
+
+      document.getElementById("role-modal").classList.add("active");
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function openEditRoleModal(id) {
+      const role = allRoles.find(r => r.id === id);
+      if (!role) return;
+
+      document.getElementById("role-modal-title").innerText = "Edit Role & Permissions";
+      document.getElementById("role-id").value = role.id;
+      document.getElementById("role-name").value = role.display_name;
+      document.getElementById("role-desc").value = role.description || "";
+
+      const activePermIds = role.permissions ? role.permissions.map(p => p.id) : [];
+      renderCheckboxes(activePermIds);
+
+      document.getElementById("role-modal").classList.add("active");
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeRoleModal() {
+      document.getElementById("role-modal").classList.remove("active");
+    }
+
+    async function handleSaveRole(e) {
+      e.preventDefault();
+
+      const id = document.getElementById("role-id").value;
+      const checkedBoxes = Array.from(document.querySelectorAll("input[name='perm_check']:checked"));
+      const permIds = checkedBoxes.map(cb => parseInt(cb.value));
+
+      const payload = {
+        display_name: document.getElementById("role-name").value.trim(),
+        description: document.getElementById("role-desc").value.trim() || undefined,
+        permission_ids: permIds,
+      };
+
+      const btn = document.getElementById("btn-save-role");
+      btn.disabled = true;
+
+      try {
+        if (id) {
+          await api.put(`/roles/${id}`, payload);
+          common.showToast("Role and permissions updated successfully!", "success");
+        } else {
+          await api.post("/roles", payload);
+          common.showToast("Custom role created successfully!", "success");
+        }
+
+        closeRoleModal();
+        loadRoles();
+      } catch (err) {
+        common.showToast(err.message || "Failed to save role.", "error");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteRole(id) {
+      common.showConfirm({
+        title: "Delete Role?",
+        message: "Are you sure you want to delete this custom role?",
+        confirmText: "Delete",
+        isDanger: true,
+        onConfirm: async () => {
+          try {
+            await api.delete(`/roles/${id}`);
+            common.showToast("Role removed.", "info");
+            loadRoles();
+          } catch (e) {
+            common.showToast(e.message || "Could not delete role.", "error");
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Sidebar Placeholder -->
+    <div id="app-sidebar-placeholder"></div>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+      <!-- Topbar Placeholder -->
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+        <!-- Quick Action Bar -->
+        <div class="quick-action-bar">
+          <a href="pos.html" class="quick-btn" data-permission="pos.create">
+            <i data-lucide="shopping-cart" style="color:var(--primary);"></i> Launch POS Checkout
+          </a>
+          <a href="appointments.html?action=new" class="quick-btn" data-permission="appointments.create">
+            <i data-lucide="calendar-plus" style="color:#10b981;"></i> Book Appointment
+          </a>
+          <a href="quotation-create.html" class="quick-btn" data-permission="quotations.create">
+            <i data-lucide="file-plus-2" style="color:#8b5cf6;"></i> Create Quotation
+          </a>
+          <a href="customers.html?action=new" class="quick-btn" data-permission="customers.create">
+            <i data-lucide="user-plus" style="color:#3b82f6;"></i> Register Client
+          </a>
+        </div>
+
+        <!-- KPI Metrics Grid (8 Metric Cards) -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-info">
+              <h4>Today's Revenue</h4>
+              <div class="metric-value" id="kpi-today-revenue">LKR 0.00</div>
+              <div class="metric-trend up"><i data-lucide="trending-up" style="width:14px;"></i> Live Today</div>
+            </div>
+            <div class="metric-icon-box"><i data-lucide="banknote"></i></div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-info">
+              <h4>Today's Sales</h4>
+              <div class="metric-value" id="kpi-today-sales">0</div>
+              <div class="metric-trend up"><i data-lucide="shopping-bag" style="width:14px;"></i> Completed Bills</div>
+            </div>
+            <div class="metric-icon-box"><i data-lucide="receipt"></i></div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-info">
+              <h4>Today's Appointments</h4>
+              <div class="metric-value" id="kpi-today-appointments">0</div>
+              <div class="metric-trend"><i data-lucide="calendar" style="width:14px;"></i> Scheduled</div>
+            </div>
+            <div class="metric-icon-box"><i data-lucide="clock"></i></div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-info">
+              <h4>Total Registered Clients</h4>
+              <div class="metric-value" id="kpi-total-customers">0</div>
+              <div class="metric-trend up"><i data-lucide="users" style="width:14px;"></i> Active Client Base</div>
+            </div>
+            <div class="metric-icon-box"><i data-lucide="heart"></i></div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-info">
+              <h4>Monthly Revenue</h4>
+              <div class="metric-value" id="kpi-monthly-revenue">LKR 0.00</div>
+              <div class="metric-trend up"><i data-lucide="sparkles" style="width:14px;"></i> This Month</div>
+            </div>
+            <div class="metric-icon-box"><i data-lucide="award"></i></div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-info">
+              <h4>Pending Quotations</h4>
+              <div class="metric-value" id="kpi-pending-quotes">0</div>
+              <div class="metric-trend"><i data-lucide="file-text" style="width:14px;"></i> Awaiting Client</div>
+            </div>
+            <div class="metric-icon-box"><i data-lucide="file-check"></i></div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-info">
+              <h4>Pending Balances</h4>
+              <div class="metric-value" id="kpi-pending-payments">LKR 0.00</div>
+              <div class="metric-trend down"><i data-lucide="alert-circle" style="width:14px;"></i> Receivables</div>
+            </div>
+            <div class="metric-icon-box"><i data-lucide="credit-card"></i></div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-info">
+              <h4>Low Stock Alerts</h4>
+              <div class="metric-value" id="kpi-low-stock">0</div>
+              <div class="metric-trend down" id="low-stock-trend-label"><i data-lucide="alert-triangle" style="width:14px;"></i> Reorder Needed</div>
+            </div>
+            <div class="metric-icon-box" style="background:#fef2f2;color:var(--danger);"><i data-lucide="package-x"></i></div>
+          </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="dashboard-charts-grid">
+          <div class="chart-card">
+            <div class="card-header-clean">
+              <h3 class="card-title-clean">Daily Sales Trend (Last 7 Days)</h3>
+              <span class="badge-custom badge-primary">LKR Revenue</span>
+            </div>
+            <div style="height: 280px; position: relative;">
+              <canvas id="dailySalesChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="card-header-clean">
+              <h3 class="card-title-clean">Revenue Breakdown</h3>
+              <span class="badge-custom badge-info">Category Mix</span>
+            </div>
+            <div style="height: 280px; position: relative;">
+              <canvas id="revenueBreakdownChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Data Grid: Upcoming Appointments & Recent Sales -->
+        <div class="dashboard-bottom-grid">
+          <!-- Upcoming Appointments -->
+          <div class="card-custom">
+            <div class="card-header-clean">
+              <h3 class="card-title-clean">Upcoming Appointments</h3>
+              <a href="appointments.html" class="btn-soft-pink" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;">View All</a>
+            </div>
+            <div class="table-custom-container">
+              <table class="table-custom">
+                <thead>
+                  <tr>
+                    <th>Time / Date</th>
+                    <th>Client</th>
+                    <th>Service</th>
+                    <th>Stylist</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="upcoming-appointments-body">
+                  <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem;">Loading appointments...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Recent Sales & Invoices -->
+          <div class="card-custom">
+            <div class="card-header-clean">
+              <h3 class="card-title-clean">Recent Sales & Invoices</h3>
+              <a href="invoices.html" class="btn-soft-pink" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;">View Invoices</a>
+            </div>
+            <div class="table-custom-container">
+              <table class="table-custom">
+                <thead>
+                  <tr>
+                    <th>Invoice #</th>
+                    <th>Customer</th>
+                    <th>Total</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-sales-body">
+                  <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem;">Loading sales...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/dashboard.js"></script>
+</body>
+</html>

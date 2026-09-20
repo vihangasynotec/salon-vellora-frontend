@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Permissions Registry — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <div id="app-sidebar-placeholder"></div>
+
+    <main class="app-main">
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+          <div>
+            <h2 style="font-size:1.3rem;font-weight:700;">Granular Permissions Registry</h2>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin:0;">System access keys enforced across both backend REST endpoints and frontend action triggers</p>
+          </div>
+          <a href="roles.html" class="btn-secondary-custom">
+            <i data-lucide="shield"></i> Manage Roles
+          </a>
+        </div>
+
+        <div id="permissions-modules-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+          <div style="grid-column: 1/-1; text-align:center; padding: 3rem; color: var(--text-muted);">Loading permissions...</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      common.initLayout("roles", "Permissions Registry", "Comprehensive registry of system permissions");
+
+      try {
+        const res = await api.get("/permissions");
+        if (!res.success || !res.data) return;
+
+        const grid = document.getElementById("permissions-modules-grid");
+        let html = '';
+
+        for (const [module, perms] of Object.entries(res.data)) {
+          html += `
+            <div class="card-custom">
+              <div class="card-header-clean">
+                <h3 class="card-title-clean" style="color:var(--primary-dark);">${module}</h3>
+                <span class="badge-custom badge-primary">${perms.length} keys</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                ${perms.map(p => `
+                  <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border-subtle);">
+                    <div>
+                      <div style="font-weight:600; font-size:0.85rem;">${p.display_name}</div>
+                      <div style="font-family:monospace; font-size:0.75rem; color:var(--text-light);">${p.name}</div>
+                    </div>
+                    <span class="badge-custom badge-success" style="font-size:0.7rem;">Active</span>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+          `;
+        }
+
+        grid.innerHTML = html;
+      } catch (e) {
+        common.showToast("Failed to load permissions.", "error");
+      }
+    });
+  </script>
+</body>
+</html>

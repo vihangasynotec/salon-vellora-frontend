@@ -1,0 +1,169 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Quotation — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <div id="app-sidebar-placeholder"></div>
+
+    <main class="app-main">
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+        <div style="max-width: 900px; margin: 0 auto;">
+          <div class="card-custom" style="padding: 2rem;">
+            <div class="card-header-clean" style="margin-bottom: 1.5rem;">
+              <div>
+                <h2 style="font-size: 1.4rem; color: var(--primary-dark);">Create Bridal & Package Quotation</h2>
+                <p style="font-size: 0.82rem; color: var(--text-muted); margin:0;">Issue professional formal estimates for weddings, group bookings, and custom packages</p>
+              </div>
+              <a href="quotations.html" class="btn-secondary-custom">
+                <i data-lucide="arrow-left"></i> Back to Quotations
+              </a>
+            </div>
+
+            <form id="create-quote-form" onsubmit="handleCreateQuotation(event)">
+              <!-- Customer Details Grid -->
+              <div style="background: var(--bg-main); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem; border: 1px solid var(--border);">
+                <h4 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.85rem;">1. Client / Bride Information</h4>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+                  <div>
+                    <label class="form-label-custom">Select Existing Client (Optional)</label>
+                    <select id="q-customer-select" class="form-select-custom" onchange="autoFillCustomerInfo()">
+                      <option value="">-- New / Walk-in Client --</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="form-label-custom">Bride / Client Full Name *</label>
+                    <input type="text" id="q-customer-name" class="form-control-custom" required placeholder="e.g. Dilini Perera">
+                  </div>
+                  <div>
+                    <label class="form-label-custom">Contact Phone Number *</label>
+                    <input type="tel" id="q-customer-phone" class="form-control-custom" required placeholder="07XXXXXXXX">
+                  </div>
+                  <div>
+                    <label class="form-label-custom">Email Address</label>
+                    <input type="email" id="q-customer-email" class="form-control-custom" placeholder="client@gmail.com">
+                  </div>
+                  <div style="grid-column: 1/-1;">
+                    <label class="form-label-custom">Address / Location</label>
+                    <input type="text" id="q-customer-address" class="form-control-custom" placeholder="e.g. Galle Fort, Galle">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quote Dates & Validity -->
+              <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                  <label class="form-label-custom">Quotation Date *</label>
+                  <input type="date" id="q-date" class="form-control-custom" required>
+                </div>
+                <div>
+                  <label class="form-label-custom">Valid Until Date *</label>
+                  <input type="date" id="q-valid-until" class="form-control-custom" required>
+                </div>
+                <div>
+                  <label class="form-label-custom">Initial Status</label>
+                  <select id="q-status" class="form-select-custom">
+                    <option value="Draft">Draft</option>
+                    <option value="Sent" selected>Sent to Client</option>
+                    <option value="Approved">Approved</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Items & Services Table -->
+              <div style="margin-bottom: 1.5rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.65rem;">
+                  <h4 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin:0;">2. Quotation Line Items</h4>
+                  <button type="button" class="btn-soft-pink" onclick="addQuoteRow()">
+                    <i data-lucide="plus"></i> Add Service Line
+                  </button>
+                </div>
+
+                <div class="table-custom-container">
+                  <table class="table-custom" id="quote-items-table">
+                    <thead>
+                      <tr>
+                        <th style="width: 40%;">Service / Package Description</th>
+                        <th>Duration (min)</th>
+                        <th>Unit Price (LKR)</th>
+                        <th>Qty</th>
+                        <th>Discount (LKR)</th>
+                        <th>Total (LKR)</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="quote-rows-body">
+                      <!-- Dynamic rows -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Summary Totals -->
+              <div style="display:flex; justify-content:flex-end; margin-bottom: 1.5rem;">
+                <div style="width: 320px; background: var(--bg-main); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
+                  <div style="display:flex; justify-content:space-between; margin-bottom: 0.45rem; font-size: 0.85rem;">
+                    <span>Subtotal:</span>
+                    <span id="q-subtotal-disp" style="font-weight:600;">LKR 0.00</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.45rem; font-size: 0.85rem;">
+                    <span>Overall Discount:</span>
+                    <input type="number" id="q-total-discount" value="0" min="0" style="width:90px; text-align:right; padding:2px 6px; border:1px solid var(--border); border-radius:4px;" oninput="calcQuoteTotals()">
+                  </div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; border-top: 2px dashed var(--border); padding-top: 0.65rem; font-size: 1.15rem; font-weight: 800; color: var(--primary-dark);">
+                    <span>Grand Total:</span>
+                    <span id="q-grand-total-disp">LKR 0.00</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Terms & Notes -->
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.75rem;">
+                <div>
+                  <label class="form-label-custom">Special Remarks / Notes</label>
+                  <textarea id="q-notes" class="form-control-custom" rows="3" placeholder="e.g. Traditional jewellery provided by salon, 4 bridesmaids included..."></textarea>
+                </div>
+                <div>
+                  <label class="form-label-custom">Terms & Conditions</label>
+                  <textarea id="q-terms" class="form-control-custom" rows="3">1. 50% advance payment required to lock the wedding date.
+2. Balance to be settled on or before the dressing date.
+3. Date changes subject to stylist availability.</textarea>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:flex-end; gap: 10px;">
+                <a href="quotations.html" class="btn-secondary-custom">Cancel</a>
+                <button type="submit" id="btn-save-quote" class="btn-primary-custom" style="padding: 0.65rem 1.75rem;">
+                  <i data-lucide="check-circle"></i> Save & Generate Quotation
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/quotations.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      initQuotationCreateForm();
+    });
+  </script>
+</body>
+</html>

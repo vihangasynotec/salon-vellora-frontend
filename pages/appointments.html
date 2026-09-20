@@ -1,0 +1,210 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Appointments & Calendar — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .cal-controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .view-toggle-pills {
+      display: inline-flex;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      padding: 3px;
+    }
+    .view-pill {
+      padding: 0.4rem 1rem;
+      border-radius: var(--radius-pill);
+      border: none;
+      background: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .view-pill.active {
+      background: var(--primary-gradient);
+      color: #fff;
+    }
+    .cal-grid-day {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: #fff;
+      overflow: hidden;
+    }
+    .time-slot-label {
+      padding: 1rem 0.5rem;
+      text-align: right;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-light);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .time-slot-lane {
+      border-bottom: 1px solid var(--border-subtle);
+      border-left: 1px solid var(--border-subtle);
+      padding: 0.5rem 1rem;
+      min-height: 52px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .appointment-chip {
+      background: var(--primary-light);
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .appointment-chip:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <div id="app-sidebar-placeholder"></div>
+
+    <main class="app-main">
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+        <!-- Controls Bar -->
+        <div class="cal-controls-bar">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <input type="date" id="cal-date-picker" class="form-control-custom" style="width:165px;" onchange="onDateChanged()">
+            <select id="cal-staff-filter" class="form-select-custom" style="width:180px;" onchange="loadAppointments()">
+              <option value="">All Stylists</option>
+            </select>
+            <div class="view-toggle-pills">
+              <button class="view-pill active" onclick="switchView('list', this)">List View</button>
+              <button class="view-pill" onclick="switchView('day', this)">Day Schedule</button>
+            </div>
+          </div>
+
+          <button class="btn-primary-custom" onclick="openBookModal()">
+            <i data-lucide="plus-circle"></i> Book New Appointment
+          </button>
+        </div>
+
+        <!-- List View -->
+        <div id="view-list" class="table-custom-container">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Time & Date</th>
+                <th>Client</th>
+                <th>Service / Package</th>
+                <th>Stylist</th>
+                <th>Duration</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="appointments-list-body">
+              <tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--text-muted);">Loading appointment schedule...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Day Time Grid View -->
+        <div id="view-day" style="display:none;" class="cal-grid-day">
+          <div id="day-grid-labels"></div>
+          <div id="day-grid-lanes"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- BOOK APPOINTMENT MODAL -->
+  <div class="modal-overlay" id="book-modal">
+    <div class="modal-card" style="max-width: 500px;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean">Schedule Appointment</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeBookModal()"><i data-lucide="x"></i></button>
+      </div>
+      <form id="book-form" onsubmit="handleBookAppointment(event)">
+        <div class="modal-body-custom">
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Client *</label>
+            <select id="book-customer" class="form-select-custom" required>
+              <option value="">-- Select Registered Client --</option>
+            </select>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Service / Package *</label>
+              <select id="book-service" class="form-select-custom" required onchange="onBookServiceChanged()"></select>
+            </div>
+            <div>
+              <label class="form-label-custom">Assigned Stylist *</label>
+              <select id="book-staff" class="form-select-custom" required></select>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Date *</label>
+              <input type="date" id="book-date" class="form-control-custom" required>
+            </div>
+            <div>
+              <label class="form-label-custom">Start Time *</label>
+              <input type="time" id="book-time" class="form-control-custom" value="09:00" required>
+            </div>
+          </div>
+
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Estimated Duration (Minutes)</label>
+            <input type="number" id="book-duration" class="form-control-custom" value="60" min="15">
+          </div>
+
+          <div>
+            <label class="form-label-custom">Appointment Notes</label>
+            <input type="text" id="book-notes" class="form-control-custom" placeholder="e.g. Bridal dressing, preferred style...">
+          </div>
+        </div>
+        <div class="modal-footer-custom">
+          <button type="button" class="btn-secondary-custom" onclick="closeBookModal()">Cancel</button>
+          <button type="submit" id="btn-save-appointment" class="btn-primary-custom">
+            <i data-lucide="calendar-check"></i> Save Appointment
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/appointments.js"></script>
+</body>
+</html>

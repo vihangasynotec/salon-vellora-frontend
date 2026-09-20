@@ -1,0 +1,133 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Audit Trail — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <div id="app-sidebar-placeholder"></div>
+
+    <main class="app-main">
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h2 style="font-size:1.3rem;font-weight:700;">System Security Audit Trail</h2>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin:0;">Immutable log of user actions, POS sales, refunds, quotes, price modifications and inventory changes</p>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <select id="audit-module-filter" class="form-select-custom" style="width:160px;" onchange="loadAuditLogs()">
+              <option value="">All Modules</option>
+              <option value="auth">Authentication</option>
+              <option value="pos">POS & Sales</option>
+              <option value="quotations">Quotations</option>
+              <option value="appointments">Appointments</option>
+              <option value="inventory">Inventory</option>
+              <option value="users">Users</option>
+              <option value="settings">Settings</option>
+            </select>
+            <input type="text" id="audit-search" class="form-control-custom" placeholder="Search logs..." style="width:200px;" oninput="debounceAuditSearch()">
+          </div>
+        </div>
+
+        <div class="table-custom-container">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>User / Operator</th>
+                <th>Action</th>
+                <th>Module</th>
+                <th>Record ID</th>
+                <th>IP Address</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="audit-logs-table-body">
+              <tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text-muted);">Loading audit logs...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      common.initLayout("audit", "Security Audit Trail", "Real-time compliance monitoring, user operations, and historical activity ledger");
+      loadAuditLogs();
+    });
+
+    let auditTimer = null;
+    function debounceAuditSearch() {
+      clearTimeout(auditTimer);
+      auditTimer = setTimeout(loadAuditLogs, 300);
+    }
+
+    async function loadAuditLogs() {
+      const tbody = document.getElementById("audit-logs-table-body");
+      const module = document.getElementById("audit-module-filter").value;
+      const search = document.getElementById("audit-search").value.trim();
+
+      try {
+        const res = await api.get("/audit-logs", { module, search, per_page: 50 });
+        if (!res.success || !res.data) return;
+
+        const logs = res.data.data || res.data;
+
+        if (logs.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text-muted);">No audit events recorded.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = logs.map(l => `
+          <tr>
+            <td>
+              <div style="font-weight:600;">${common.formatDate(l.created_at)}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">${common.formatTime(l.created_at)}</div>
+            </td>
+            <td><b>${l.user_name || 'System'}</b></td>
+            <td><span class="badge-custom badge-${getActionBadge(l.action)}">${l.action}</span></td>
+            <td><span class="badge-custom badge-info">${l.module}</span></td>
+            <td style="font-family:monospace;font-size:0.8rem;">#${l.record_id || '-'}</td>
+            <td style="font-family:monospace;font-size:0.8rem;color:var(--text-light);">${l.ip_address || '127.0.0.1'}</td>
+            <td style="font-size:0.78rem;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              ${l.new_data ? JSON.stringify(l.new_data) : '-'}
+            </td>
+          </tr>
+        `).join("");
+
+        if (window.lucide) lucide.createIcons();
+
+      } catch (e) {
+        common.showToast("Failed to load audit logs.", "error");
+      }
+    }
+
+    function getActionBadge(action) {
+      switch (action) {
+        case 'sale': return 'success';
+        case 'refund': return 'danger';
+        case 'delete': return 'danger';
+        case 'create': return 'primary';
+        case 'login': return 'purple';
+        case 'logout': return 'info';
+        default: return 'warning';
+      }
+    }
+  </script>
+</body>
+</html>

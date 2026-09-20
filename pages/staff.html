@@ -1,0 +1,125 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff & Stylists — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <div id="app-sidebar-placeholder"></div>
+
+    <main class="app-main">
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h2 style="font-size:1.3rem;font-weight:700;">Stylists & Team Members</h2>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin:0;">Manage stylist profiles, service commissions and performance</p>
+          </div>
+          <button class="btn-primary-custom" onclick="openStaffModal()" data-permission="staff.create">
+            <i data-lucide="user-plus"></i> Add Team Member
+          </button>
+        </div>
+
+        <div class="table-custom-container">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Stylist Name</th>
+                <th>Designation</th>
+                <th>Specialization</th>
+                <th>Phone Number</th>
+                <th>Base Salary</th>
+                <th>Commission %</th>
+                <th>Status</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="staff-table-body">
+              <tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--text-muted);">Loading staff directory...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- STAFF PERFORMANCE MODAL -->
+  <div class="modal-overlay" id="staff-perf-modal">
+    <div class="modal-card" style="max-width: 550px;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean" id="staff-perf-name">Stylist Performance</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeStaffPerfModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body-custom" id="staff-perf-body">
+        <!-- Dynamically loaded -->
+      </div>
+    </div>
+  </div>
+
+  <!-- STAFF CREATE / EDIT MODAL -->
+  <div class="modal-overlay" id="staff-modal">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean" id="staff-modal-title">Add Team Member</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeStaffModal()"><i data-lucide="x"></i></button>
+      </div>
+      <form onsubmit="handleSaveStaff(event)">
+        <div class="modal-body-custom">
+          <input type="hidden" id="staff-id">
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Stylist Full Name *</label>
+            <input type="text" id="s-name" class="form-control-custom" required placeholder="e.g. Sachini Senanayake">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Designation *</label>
+              <input type="text" id="s-desig" class="form-control-custom" required placeholder="e.g. Senior Hair Stylist">
+            </div>
+            <div>
+              <label class="form-label-custom">Phone Number</label>
+              <input type="tel" id="s-phone" class="form-control-custom" placeholder="07XXXXXXXX">
+            </div>
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Specialization (Skills)</label>
+            <input type="text" id="s-spec" class="form-control-custom" placeholder="e.g. Keratin Treatments, Balayage, Bridal Hair">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Base Salary (LKR)</label>
+              <input type="number" id="s-salary" class="form-control-custom" value="0" min="0">
+            </div>
+            <div>
+              <label class="form-label-custom">Commission Rate (%)</label>
+              <input type="number" id="s-comm" class="form-control-custom" value="8" min="0" max="100" step="0.5">
+            </div>
+          </div>
+          <div>
+            <label class="form-label-custom">Email Address</label>
+            <input type="email" id="s-email" class="form-control-custom" placeholder="stylist@salonvellora.com">
+          </div>
+        </div>
+        <div class="modal-footer-custom">
+          <button type="button" class="btn-secondary-custom" onclick="closeStaffModal()">Cancel</button>
+          <button type="submit" id="btn-save-staff" class="btn-primary-custom">Save Team Member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/staff.js"></script>
+</body>
+</html>

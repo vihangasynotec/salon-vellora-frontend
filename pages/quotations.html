@@ -1,0 +1,133 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quotations — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/print.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <div id="app-sidebar-placeholder"></div>
+
+    <main class="app-main">
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+        <!-- Action Header & Filters -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px;">
+          <div style="display:flex;gap:10px;flex:1;max-width:600px;">
+            <div style="flex:1;position:relative;">
+              <input type="text" id="quote-search" class="form-control-custom" placeholder="Search by quotation #, bride name, or phone..." style="padding-left:38px;" oninput="debounceSearch()">
+              <i data-lucide="search" style="position:absolute;left:12px;top:10px;width:18px;color:var(--text-light);"></i>
+            </div>
+            <select id="quote-status-filter" class="form-select-custom" style="width:160px;" onchange="loadQuotations()">
+              <option value="">All Statuses</option>
+              <option value="Draft">Draft</option>
+              <option value="Sent">Sent</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Converted">Converted</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+          <a href="quotation-create.html" class="btn-primary-custom" data-permission="quotations.create">
+            <i data-lucide="plus-circle"></i> Create New Quotation
+          </a>
+        </div>
+
+        <!-- Quotations Table -->
+        <div class="table-custom-container">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Quotation No.</th>
+                <th>Client / Bride</th>
+                <th>Quote Date</th>
+                <th>Valid Until</th>
+                <th>Grand Total</th>
+                <th>Status</th>
+                <th>Prepared By</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="quotations-table-body">
+              <tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--text-muted);">Loading quotations...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- A4 QUOTATION PREVIEW MODAL -->
+  <div class="modal-overlay" id="quote-preview-modal">
+    <div class="modal-card" style="max-width: 800px; max-height: 95vh;">
+      <div class="modal-header-custom no-print">
+        <h3 class="card-title-clean">Quotation Preview</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeQuotePreview()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body-custom" style="padding:1.5rem;background:#fdf2f5;">
+        <!-- Printable A4 Document Area -->
+        <div id="quote-print-area" class="a4-doc-container" style="background:#fff;padding:25px;border-radius:12px;box-shadow:var(--shadow-sm);">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer-custom no-print" id="quote-modal-actions">
+        <!-- Populated dynamically with Print, Convert, Status buttons -->
+      </div>
+    </div>
+  </div>
+
+  <!-- CONVERT TO APPOINTMENT MODAL -->
+  <div class="modal-overlay" id="convert-appointment-modal">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean">Convert Quotation to Appointment</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeConvertApptModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body-custom">
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;">
+          Schedule client and services into the salon appointment calendar without re-entering details.
+        </p>
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-custom">Assign Stylist / Specialist *</label>
+          <select id="convert-appt-staff" class="form-select-custom"></select>
+        </div>
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-custom">Booking Date *</label>
+          <input type="date" id="convert-appt-date" class="form-control-custom">
+        </div>
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-custom">Start Time *</label>
+          <input type="time" id="convert-appt-time" class="form-control-custom" value="09:00">
+        </div>
+        <div>
+          <label class="form-label-custom">Appointment Notes</label>
+          <input type="text" id="convert-appt-notes" class="form-control-custom" placeholder="e.g. Bridal setup, specific dressing style...">
+        </div>
+      </div>
+      <div class="modal-footer-custom">
+        <button class="btn-secondary-custom" onclick="closeConvertApptModal()">Cancel</button>
+        <button class="btn-primary-custom" id="btn-submit-convert-appt" onclick="submitConvertToAppointment()">
+          <i data-lucide="calendar-check"></i> Confirm & Book Appointment
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/html2pdf.bundle.min.js"></script>
+  <script src="../js/print-engine.js"></script>
+  <script src="../js/quotations.js"></script>
+</body>
+</html>

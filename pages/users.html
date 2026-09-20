@@ -1,0 +1,243 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Users — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <div id="app-sidebar-placeholder"></div>
+
+    <main class="app-main">
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+          <div>
+            <h2 style="font-size:1.3rem;font-weight:700;">System User Accounts</h2>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin:0;">Manage portal logins, assigned roles, discount authority and activity</p>
+          </div>
+          <button class="btn-primary-custom" onclick="openUserModal()" data-permission="users.create">
+            <i data-lucide="user-plus"></i> Create User
+          </button>
+        </div>
+
+        <div class="table-custom-container">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>User Name</th>
+                <th>Email / Username</th>
+                <th>Assigned Role</th>
+                <th>Max Discount %</th>
+                <th>Last Login</th>
+                <th>Status</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body">
+              <tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text-muted);">Loading users...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- USER MODAL -->
+  <div class="modal-overlay" id="user-modal">
+    <div class="modal-card" style="max-width: 460px;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean" id="user-modal-title">Create User Account</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeUserModal()"><i data-lucide="x"></i></button>
+      </div>
+      <form onsubmit="handleSaveUser(event)">
+        <div class="modal-body-custom">
+          <input type="hidden" id="u-id">
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Full Name *</label>
+            <input type="text" id="u-name" class="form-control-custom" required placeholder="e.g. Dilshan Perera">
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Email Address *</label>
+            <input type="email" id="u-email" class="form-control-custom" required placeholder="user@salonvellora.com">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Role *</label>
+              <select id="u-role" class="form-select-custom" required></select>
+            </div>
+            <div>
+              <label class="form-label-custom">Max Discount %</label>
+              <input type="number" id="u-disc" class="form-control-custom" value="10" min="0" max="100">
+            </div>
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Password <span id="pass-hint" style="font-weight:normal;color:var(--text-muted);">(Min 6 chars)</span></label>
+            <input type="password" id="u-password" class="form-control-custom" placeholder="••••••••">
+          </div>
+        </div>
+        <div class="modal-footer-custom">
+          <button type="button" class="btn-secondary-custom" onclick="closeUserModal()">Cancel</button>
+          <button type="submit" id="btn-save-user" class="btn-primary-custom">Save User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    let allUsers = [];
+    let allRoles = [];
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      common.initLayout("users", "User Management", "Staff credentials, assigned RBAC roles and discount permission controls");
+      await loadRolesDropdown();
+      await loadUsers();
+    });
+
+    async function loadRolesDropdown() {
+      try {
+        const res = await api.get("/roles");
+        if (res.success && res.data) {
+          allRoles = res.data;
+          const select = document.getElementById("u-role");
+          select.innerHTML = allRoles.map(r => `<option value="${r.id}">${r.display_name}</option>`).join("");
+        }
+      } catch (e) {}
+    }
+
+    async function loadUsers() {
+      const tbody = document.getElementById("users-table-body");
+      try {
+        const res = await api.get("/users");
+        if (!res.success || !res.data) return;
+
+        allUsers = res.data;
+        tbody.innerHTML = allUsers.map(u => `
+          <tr>
+            <td><b>${u.name}</b></td>
+            <td>${u.email}</td>
+            <td><span class="badge-custom badge-primary">${u.role}</span></td>
+            <td>${u.max_discount_percentage}%</td>
+            <td>${u.last_login_at ? common.formatDate(u.last_login_at) + ' ' + common.formatTime(u.last_login_at) : 'Never'}</td>
+            <td><span class="badge-custom badge-${u.status === 'active' ? 'success' : 'danger'}">${u.status}</span></td>
+            <td style="text-align:right;">
+              <button class="btn-secondary-custom" style="padding:4px 8px;font-size:0.75rem;" onclick="openEditUserModal(${u.id})">
+                <i data-lucide="edit-3" style="width:14px;"></i>
+              </button>
+              ${u.role !== 'Super Admin' ? `
+              <button class="btn-soft-pink" style="padding:4px 8px;font-size:0.75rem;" onclick="deleteUser(${u.id})">
+                <i data-lucide="trash-2" style="width:14px;"></i>
+              </button>` : ''}
+            </td>
+          </tr>
+        `).join("");
+
+        if (window.lucide) lucide.createIcons();
+        permissions.applyUI();
+
+      } catch (e) {
+        common.showToast("Failed to load users.", "error");
+      }
+    }
+
+    function openUserModal() {
+      document.getElementById("user-modal-title").innerText = "Create User Account";
+      document.getElementById("u-id").value = "";
+      document.getElementById("u-name").value = "";
+      document.getElementById("u-email").value = "";
+      document.getElementById("u-disc").value = "10";
+      document.getElementById("u-password").value = "";
+      document.getElementById("u-password").required = true;
+
+      document.getElementById("user-modal").classList.add("active");
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function openEditUserModal(id) {
+      const u = allUsers.find(usr => usr.id === id);
+      if (!u) return;
+
+      document.getElementById("user-modal-title").innerText = "Edit User Account";
+      document.getElementById("u-id").value = u.id;
+      document.getElementById("u-name").value = u.name;
+      document.getElementById("u-email").value = u.email;
+      document.getElementById("u-role").value = u.role_id;
+      document.getElementById("u-disc").value = u.max_discount_percentage;
+      document.getElementById("u-password").value = "";
+      document.getElementById("u-password").required = false;
+
+      document.getElementById("user-modal").classList.add("active");
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeUserModal() {
+      document.getElementById("user-modal").classList.remove("active");
+    }
+
+    async function handleSaveUser(e) {
+      e.preventDefault();
+
+      const id = document.getElementById("u-id").value;
+      const payload = {
+        name: document.getElementById("u-name").value.trim(),
+        email: document.getElementById("u-email").value.trim(),
+        role_id: parseInt(document.getElementById("u-role").value),
+        max_discount_percentage: parseFloat(document.getElementById("u-disc").value) || 0,
+      };
+
+      const pass = document.getElementById("u-password").value;
+      if (pass) payload.password = pass;
+
+      const btn = document.getElementById("btn-save-user");
+      btn.disabled = true;
+
+      try {
+        if (id) {
+          await api.put(`/users/${id}`, payload);
+          common.showToast("User updated successfully!", "success");
+        } else {
+          await api.post("/users", payload);
+          common.showToast("User created successfully!", "success");
+        }
+
+        closeUserModal();
+        loadUsers();
+      } catch (err) {
+        common.showToast(err.message || "Failed to save user.", "error");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteUser(id) {
+      common.showConfirm({
+        title: "Delete User?",
+        message: "Are you sure you want to deactivate and remove this user account?",
+        confirmText: "Delete",
+        isDanger: true,
+        onConfirm: async () => {
+          try {
+            await api.delete(`/users/${id}`);
+            common.showToast("User deactivated.", "info");
+            loadUsers();
+          } catch (err) {
+            common.showToast(err.message || "Failed to delete user.", "error");
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>

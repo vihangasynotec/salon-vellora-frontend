@@ -1,0 +1,148 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock & Inventory Ledger — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <div id="app-sidebar-placeholder"></div>
+
+    <main class="app-main">
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h2 style="font-size:1.3rem;font-weight:700;">Inventory & Stock Movements</h2>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin:0;">Real-time stock ledger, low-stock notifications & inward/outward adjustments</p>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <a href="products.html" class="btn-secondary-custom">
+              <i data-lucide="package"></i> Manage Products
+            </a>
+            <button class="btn-primary-custom" onclick="openStockAdjustModal()" data-permission="inventory.adjust">
+              <i data-lucide="sliders"></i> Adjust Stock
+            </button>
+          </div>
+        </div>
+
+        <!-- Inventory Summary Cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:1rem;margin-bottom:1.5rem;">
+          <div class="card-custom" style="padding:1.15rem;">
+            <div style="font-size:0.75rem;font-weight:700;color:var(--text-muted);">TOTAL INVENTORY ITEMS</div>
+            <div id="inv-total-items" style="font-size:1.5rem;font-weight:800;color:var(--text-main);">0</div>
+          </div>
+          <div class="card-custom" style="padding:1.15rem;border-left:4px solid var(--danger);">
+            <div style="font-size:0.75rem;font-weight:700;color:var(--danger);">LOW STOCK ALERTS</div>
+            <div id="inv-low-stock-count" style="font-size:1.5rem;font-weight:800;color:var(--danger);">0</div>
+          </div>
+          <div class="card-custom" style="padding:1.15rem;">
+            <div style="font-size:0.75rem;font-weight:700;color:var(--text-muted);">TOTAL STOCK VALUE (RETAIL)</div>
+            <div id="inv-total-value" style="font-size:1.5rem;font-weight:800;color:var(--primary-dark);">LKR 0.00</div>
+          </div>
+        </div>
+
+        <!-- Tab Toggle: Stock Balances vs Movements Ledger -->
+        <div style="display:flex;gap:8px;margin-bottom:1.25rem;">
+          <button class="btn-secondary-custom active" id="tab-btn-stock" onclick="switchInvTab('stock')">Current Stock Levels</button>
+          <button class="btn-secondary-custom" id="tab-btn-ledger" onclick="switchInvTab('ledger')">Stock Movement Ledger</button>
+        </div>
+
+        <!-- Stock Levels View -->
+        <div id="inv-stock-view" class="table-custom-container">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Brand</th>
+                <th>SKU / Barcode</th>
+                <th>Retail Price</th>
+                <th>Stock In Hand</th>
+                <th>Status</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="stock-table-body">
+              <tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--text-muted);">Loading inventory...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Ledger View -->
+        <div id="inv-ledger-view" style="display:none;" class="table-custom-container">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Product</th>
+                <th>Type</th>
+                <th>Change Qty</th>
+                <th>Balance After</th>
+                <th>Reason / Reference</th>
+                <th>Logged By</th>
+              </tr>
+            </thead>
+            <tbody id="ledger-table-body">
+              <tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text-muted);">Loading movements...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ADJUST STOCK MODAL -->
+  <div class="modal-overlay" id="adjust-stock-modal">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean">Adjust Inventory Stock</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeStockAdjustModal()"><i data-lucide="x"></i></button>
+      </div>
+      <form onsubmit="handleStockAdjust(event)">
+        <div class="modal-body-custom">
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Product *</label>
+            <select id="adj-product" class="form-select-custom" required></select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Adjustment Type *</label>
+              <select id="adj-type" class="form-select-custom" required>
+                <option value="adjustment_in">Stock Increase (+)</option>
+                <option value="adjustment_out">Stock Deduction (-)</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label-custom">Quantity *</label>
+              <input type="number" id="adj-qty" class="form-control-custom" required min="1" value="1">
+            </div>
+          </div>
+          <div>
+            <label class="form-label-custom">Reason / Notes *</label>
+            <textarea id="adj-notes" class="form-control-custom" required rows="2" placeholder="e.g. Physical stock count audit, Damaged bottle..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer-custom">
+          <button type="button" class="btn-secondary-custom" onclick="closeStockAdjustModal()">Cancel</button>
+          <button type="submit" id="btn-save-adj" class="btn-primary-custom">Apply Adjustment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/inventory.js"></script>
+</body>
+</html>

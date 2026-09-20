@@ -1,0 +1,93 @@
+/* ==========================================================================
+   SALON VELLORA — RESPONSIVE DESIGN (MOBILE, TABLET, TOUCH SCREEN)
+   ========================================================================== */
+
+/* Tablet & Mobile Nav Toggle */
+.mobile-nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.35rem;
+  color: var(--text-main);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+}
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 1015;
+}
+
+@media (max-width: 1024px) {
+  .app-sidebar {
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .app-sidebar.show {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop.show {
+    display: block;
+  }
+
+  .app-main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .mobile-nav-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pos-layout {
+    grid-template-columns: 1fr 340px;
+  }
+
+  .dashboard-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .pos-layout {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+  }
+
+  .pos-cart-panel {
+    min-height: 450px;
+  }
+
+  .app-topbar {
+    padding: 0.75rem 1rem;
+  }
+
+  .app-content {
+    padding: 1rem;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table-custom-container {
+    overflow-x: auto;
+  }
+}

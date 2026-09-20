@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Directory & Loyalty — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <div id="app-sidebar-placeholder"></div>
+
+    <main class="app-main">
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px;">
+          <div style="flex:1;max-width:400px;position:relative;">
+            <input type="text" id="cust-search" class="form-control-custom" placeholder="Search clients by name, phone, or email..." style="padding-left:38px;" oninput="debounceCustomerSearch()">
+            <i data-lucide="search" style="position:absolute;left:12px;top:10px;width:18px;color:var(--text-light);"></i>
+          </div>
+          <button class="btn-primary-custom" onclick="openCreateCustomerModal()" data-permission="customers.create">
+            <i data-lucide="user-plus"></i> Register New Client
+          </button>
+        </div>
+
+        <div class="table-custom-container">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Client Name</th>
+                <th>Phone Number</th>
+                <th>Email Address</th>
+                <th>Loyalty Points</th>
+                <th>Total Spending</th>
+                <th>Visits</th>
+                <th>Status</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="customers-table-body">
+              <tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--text-muted);">Loading clients...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- CUSTOMER CREATE / EDIT MODAL -->
+  <div class="modal-overlay" id="customer-modal">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean" id="customer-modal-title">Register Client</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeCustomerModal()"><i data-lucide="x"></i></button>
+      </div>
+      <form id="customer-form" onsubmit="handleSaveCustomer(event)">
+        <div class="modal-body-custom">
+          <input type="hidden" id="cust-id">
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Full Name *</label>
+            <input type="text" id="cust-name" class="form-control-custom" required placeholder="e.g. Chathurika Silva">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Phone Number *</label>
+              <input type="tel" id="cust-phone" class="form-control-custom" required placeholder="07XXXXXXXX">
+            </div>
+            <div>
+              <label class="form-label-custom">Birthday</label>
+              <input type="date" id="cust-birthday" class="form-control-custom">
+            </div>
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Email Address</label>
+            <input type="email" id="cust-email" class="form-control-custom" placeholder="client@gmail.com">
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Address / Residential Area</label>
+            <input type="text" id="cust-address" class="form-control-custom" placeholder="e.g. Pinnaduwa, Galle">
+          </div>
+          <div>
+            <label class="form-label-custom">Client Notes & Preferences</label>
+            <textarea id="cust-notes" class="form-control-custom" rows="2" placeholder="e.g. Hair color history, skin allergy remarks..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer-custom">
+          <button type="button" class="btn-secondary-custom" onclick="closeCustomerModal()">Cancel</button>
+          <button type="submit" id="btn-save-cust" class="btn-primary-custom">Save Client</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/customers.js"></script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+/* ==========================================================================
+   SALON VELLORA — NEXT-LEVEL LUXURY PRINT & RECEIPT ENGINE
+   Precision 80mm ESC/POS Roll Paper & Standard A4 Tax Invoices / Quotations
+   ========================================================================== */
+
+/* Print-only host container */
+.print-only-container {
+  display: none;
+}
+
+/* Screen preview container styles */
+.thermal-receipt-preview {
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(201, 93, 126, 0.12);
+  border: 1px solid rgba(201, 93, 126, 0.2);
+  overflow: hidden;
+}
+
+.a4-preview-scroll {
+  width: 100%;
+  max-height: 75vh;
+  overflow-y: auto;
+  padding: 10px;
+  background: #fdf2f5;
+  border-radius: 12px;
+}
+
+/* Print Media Queries */
+@media print {
+  /* Reset page */
+  @page {
+    margin: 0;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide interface elements */
+  .app-sidebar,
+  .app-topbar,
+  .quick-action-bar,
+  .cart-actions-grid,
+  .btn,
+  button,
+  .no-print,
+  #toast-container,
+  .modal-overlay:not(.print-active) {
+    display: none !important;
+  }
+
+  .app-main {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-only-container {
+    display: block !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     80MM THERMAL RECEIPT PRINT ENGINE
+     -------------------------------------------------------------------------- */
+  body.print-receipt {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 auto !important;
+    padding: 2mm 3mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+  }
+
+  body.print-receipt .luxury-receipt-container {
+    width: 74mm !important;
+    max-width: 74mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  body.print-receipt img {
+    -webkit-filter: grayscale(100%);
+    filter: grayscale(100%);
+  }
+
+  /* Force page breaks avoiding inside items */
+  body.print-receipt tr {
+    page-break-inside: avoid;
+  }
+
+  /* --------------------------------------------------------------------------
+     A4 TAX INVOICE & QUOTATION PRINT ENGINE
+     -------------------------------------------------------------------------- */
+  body.print-a4 {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 auto !important;
+    padding: 10mm 15mm !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    color: #1f2937 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  }
+
+  body.print-a4 .luxury-a4-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+
+  body.print-a4 tr {
+    page-break-inside: avoid;
+  }
+}

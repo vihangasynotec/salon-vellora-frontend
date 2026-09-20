@@ -1,0 +1,156 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports & Analytics — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <div id="app-sidebar-placeholder"></div>
+
+    <main class="app-main">
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+        <!-- Filter Header & Date Range -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:12px;">
+          <div style="display:flex; gap:10px; align-items:center;">
+            <label style="font-size:0.85rem; font-weight:600;">Date Range:</label>
+            <input type="date" id="rep-start-date" class="form-control-custom" style="width:150px;">
+            <span>to</span>
+            <input type="date" id="rep-end-date" class="form-control-custom" style="width:150px;">
+            <button class="btn-primary-custom" onclick="loadReportsData()">
+              <i data-lucide="filter"></i> Generate Report
+            </button>
+          </div>
+
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn-secondary-custom" onclick="exportReportCSV()" data-permission="reports.export">
+              <i data-lucide="file-spreadsheet"></i> Export CSV
+            </button>
+            <button class="btn-secondary-custom" onclick="downloadReportPdf()">
+              <i data-lucide="download"></i> Download Report (PDF)
+            </button>
+            <button class="btn-primary-custom" onclick="printExecutiveReport()">
+              <i data-lucide="printer"></i> Print Report (A4)
+            </button>
+          </div>
+        </div>
+
+        <!-- Financial Overview Summary Cards -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 1.75rem;">
+          <div class="card-custom">
+            <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">TOTAL REVENUE</div>
+            <div id="rep-rev" style="font-size:1.6rem; font-weight:800; color:var(--primary-dark);">LKR 0.00</div>
+          </div>
+          <div class="card-custom">
+            <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">OPERATING EXPENSES</div>
+            <div id="rep-exp" style="font-size:1.6rem; font-weight:800; color:var(--danger);">LKR 0.00</div>
+          </div>
+          <div class="card-custom" style="border-left: 4px solid var(--success);">
+            <div style="font-size:0.75rem; font-weight:700; color:var(--success);">NET PROFIT</div>
+            <div id="rep-profit" style="font-size:1.6rem; font-weight:800; color:#059669;">LKR 0.00</div>
+          </div>
+          <div class="card-custom">
+            <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">COMPLETED BILLS</div>
+            <div id="rep-sales-count" style="font-size:1.6rem; font-weight:800; color:var(--text-main);">0</div>
+          </div>
+        </div>
+
+        <!-- Quotation Conversion Metrics -->
+        <div class="card-custom" style="margin-bottom: 1.75rem;">
+          <div class="card-header-clean">
+            <h3 class="card-title-clean">Bridal Quotations & Conversion Pipeline</h3>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; text-align:center;">
+            <div style="background:var(--bg-main); padding:1rem; border-radius:var(--radius-md);">
+              <div style="font-size:0.75rem; color:var(--text-muted);">TOTAL QUOTED</div>
+              <div id="rep-q-total" style="font-size:1.4rem; font-weight:800;">0</div>
+            </div>
+            <div style="background:#ecfdf5; padding:1rem; border-radius:var(--radius-md);">
+              <div style="font-size:0.75rem; color:#065f46;">APPROVED</div>
+              <div id="rep-q-approved" style="font-size:1.4rem; font-weight:800; color:#059669;">0</div>
+            </div>
+            <div style="background:#f5f3ff; padding:1rem; border-radius:var(--radius-md);">
+              <div style="font-size:0.75rem; color:#6d28d9;">CONVERTED TO SALES</div>
+              <div id="rep-q-converted" style="font-size:1.4rem; font-weight:800; color:#7c3aed;">0</div>
+            </div>
+            <div style="background:var(--primary-soft); padding:1rem; border-radius:var(--radius-md);">
+              <div style="font-size:0.75rem; color:var(--primary-dark);">CONVERSION RATE</div>
+              <div id="rep-q-rate" style="font-size:1.4rem; font-weight:800; color:var(--primary-dark);">0%</div>
+            </div>
+            <div style="background:#eff6ff; padding:1rem; border-radius:var(--radius-md);">
+              <div style="font-size:0.75rem; color:#1e40af;">CONVERTED REVENUE</div>
+              <div id="rep-q-conv-val" style="font-size:1.2rem; font-weight:800; color:#2563eb;">LKR 0.00</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Services & Staff Performance Grids -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.75rem;">
+          <!-- Top Performing Services -->
+          <div class="card-custom">
+            <div class="card-header-clean">
+              <h3 class="card-title-clean">Top Revenue Services</h3>
+            </div>
+            <div class="table-custom-container">
+              <table class="table-custom">
+                <thead>
+                  <tr>
+                    <th>Service Name</th>
+                    <th>Qty Sold</th>
+                    <th>Total Revenue</th>
+                  </tr>
+                </thead>
+                <tbody id="rep-top-services-tbody">
+                  <tr><td colspan="3" style="text-align:center;padding:2rem;">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Stylist Sales & Commission -->
+          <div class="card-custom">
+            <div class="card-header-clean">
+              <h3 class="card-title-clean">Staff Stylist Performance</h3>
+            </div>
+            <div class="table-custom-container">
+              <table class="table-custom">
+                <thead>
+                  <tr>
+                    <th>Stylist</th>
+                    <th>Appointments</th>
+                    <th>Revenue</th>
+                    <th>Commission</th>
+                  </tr>
+                </thead>
+                <tbody id="rep-staff-tbody">
+                  <tr><td colspan="4" style="text-align:center;padding:2rem;">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/html2pdf.bundle.min.js"></script>
+  <script src="../js/print-engine.js"></script>
+  <script src="../js/reports.js"></script>
+</body>
+</html>

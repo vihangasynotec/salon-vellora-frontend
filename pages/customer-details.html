@@ -1,0 +1,144 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Profile & History — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <div id="app-sidebar-placeholder"></div>
+
+    <main class="app-main">
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+        <div style="margin-bottom: 1rem;">
+          <a href="customers.html" class="btn-secondary-custom" style="display:inline-flex;">
+            <i data-lucide="arrow-left"></i> Back to Clients
+          </a>
+        </div>
+
+        <!-- Client Overview Header Card -->
+        <div class="card-custom" style="margin-bottom: 1.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+            <div style="display:flex; gap:16px; align-items:center;">
+              <div class="avatar" id="c-avatar" style="width:64px; height:64px; font-size:1.5rem;">C</div>
+              <div>
+                <h2 id="c-name" style="font-size:1.5rem; color:var(--text-main); margin-bottom:2px;">Loading Client...</h2>
+                <div style="display:flex; gap:16px; font-size:0.85rem; color:var(--text-muted); flex-wrap:wrap;">
+                  <span><i data-lucide="phone" style="width:14px; display:inline;"></i> <span id="c-phone">-</span></span>
+                  <span><i data-lucide="mail" style="width:14px; display:inline;"></i> <span id="c-email">-</span></span>
+                  <span><i data-lucide="map-pin" style="width:14px; display:inline;"></i> <span id="c-address">-</span></span>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px;">
+              <div style="background:var(--primary-soft); padding:10px 16px; border-radius:var(--radius-md); text-align:center;">
+                <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">LOYALTY BALANCE</div>
+                <div id="c-loyalty-pts" style="font-size:1.3rem; font-weight:800; color:var(--primary-dark);">0 PTS</div>
+              </div>
+              <div style="background:#ecfdf5; padding:10px 16px; border-radius:var(--radius-md); text-align:center;">
+                <div style="font-size:0.75rem; font-weight:700; color:#065f46;">LIFETIME SPEND</div>
+                <div id="c-total-spend" style="font-size:1.3rem; font-weight:800; color:#059669;">LKR 0.00</div>
+              </div>
+              <div style="background:#eff6ff; padding:10px 16px; border-radius:var(--radius-md); text-align:center;">
+                <div style="font-size:0.75rem; font-weight:700; color:#1e40af;">TOTAL VISITS</div>
+                <div id="c-total-visits" style="font-size:1.3rem; font-weight:800; color:#2563eb;">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- History Tabs -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+          <!-- Past Invoices & Sales -->
+          <div class="card-custom">
+            <div class="card-header-clean">
+              <h3 class="card-title-clean">Sales & Invoices History</h3>
+            </div>
+            <div class="table-custom-container">
+              <table class="table-custom">
+                <thead>
+                  <tr>
+                    <th>Invoice #</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="client-sales-tbody">
+                  <tr><td colspan="4" style="text-align:center;padding:2rem;">Loading sales...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Appointments History -->
+          <div class="card-custom">
+            <div class="card-header-clean">
+              <h3 class="card-title-clean">Appointments History</h3>
+            </div>
+            <div class="table-custom-container">
+              <table class="table-custom">
+                <thead>
+                  <tr>
+                    <th>Date & Time</th>
+                    <th>Service</th>
+                    <th>Stylist</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="client-appointments-tbody">
+                  <tr><td colspan="4" style="text-align:center;padding:2rem;">Loading appointments...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loyalty Points Ledger -->
+        <div class="card-custom" style="margin-top: 1.5rem;">
+          <div class="card-header-clean">
+            <h3 class="card-title-clean">Loyalty Points Statement</h3>
+          </div>
+          <div class="table-custom-container">
+            <table class="table-custom">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Activity Description</th>
+                  <th>Points</th>
+                  <th>Balance After</th>
+                </tr>
+              </thead>
+              <tbody id="client-loyalty-tbody">
+                <tr><td colspan="4" style="text-align:center;padding:2rem;">Loading points history...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/customers.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      initCustomerDetailsPage();
+    });
+  </script>
+</body>
+</html>
