@@ -133,101 +133,180 @@
     </main>
   </div>
 
-  <!-- PAYMENT MODAL -->
+  <!-- PAYMENT MODAL (NEXT-LEVEL LUXURY DESIGN) -->
   <div class="modal-overlay" id="payment-modal">
-    <div class="modal-card" style="max-width: 520px;">
-      <div class="modal-header-custom">
-        <h3 class="card-title-clean">Payment & Checkout</h3>
-        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closePaymentModal()"><i data-lucide="x"></i></button>
+    <div class="modal-card luxury-payment-modal" style="max-width: 530px; border-radius: 20px; overflow: hidden; border: 1px solid rgba(201, 93, 126, 0.25); box-shadow: 0 25px 60px rgba(15, 23, 42, 0.25);">
+      <!-- Header -->
+      <div class="luxury-pay-header">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="pay-icon-badge">
+            <i data-lucide="credit-card" style="width:20px; height:20px;"></i>
+          </div>
+          <div>
+            <h3 style="margin:0; font-size:1.2rem; font-weight:800; color:#ffffff; font-family:'Playfair Display', Georgia, serif; letter-spacing:0.3px;">Finalize Payment</h3>
+            <span style="font-size:0.75rem; color:rgba(255,255,255,0.8); letter-spacing:0.2px;">Salon Vellora &bull; Complete Checkout</span>
+          </div>
+        </div>
+        <button class="btn-close-modal" style="background:rgba(255,255,255,0.15); border:none; cursor:pointer; color:#fff; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onclick="closePaymentModal()" title="Close (Esc)">
+          <i data-lucide="x" style="width:18px; height:18px;"></i>
+        </button>
       </div>
-      <div class="modal-body-custom">
-        <div style="text-align:center; padding: 1rem; background: var(--bg-main); border-radius: var(--radius-md); margin-bottom: 1.25rem;">
-          <div style="font-size:0.85rem;color:var(--text-muted);font-weight:600;">AMOUNT DUE</div>
-          <div id="modal-due-amount" style="font-size:2rem;font-weight:800;color:var(--primary-dark);">LKR 0.00</div>
+
+      <div class="modal-body-custom" style="padding: 1.25rem 1.5rem 1rem; background: #faf8f9;">
+        <!-- Hero Amount Due Card -->
+        <div class="luxury-due-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-size:0.72rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#fbcfe8;">TOTAL PAYABLE</span>
+            <div id="modal-client-info" style="font-size:0.75rem; font-weight:600; color:#ffffff; background:rgba(255,255,255,0.15); padding:2px 10px; border-radius:12px; display:flex; align-items:center; gap:5px;">
+              <i data-lucide="user" style="width:12px; height:12px;"></i> Walk-in Client
+            </div>
+          </div>
+          <div id="modal-due-amount" class="due-amount-hero">LKR 0.00</div>
         </div>
 
-        <label class="form-label-custom">Payment Method</label>
-        <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:8px;margin-bottom:1.25rem;">
-          <button type="button" class="btn-secondary-custom active-payment-method" id="pay-method-cash" onclick="setPaymentMethod('cash', this)" style="justify-content:center;padding:0.6rem 0.2rem;">Cash</button>
-          <button type="button" class="btn-secondary-custom" id="pay-method-card" onclick="setPaymentMethod('card', this)" style="justify-content:center;padding:0.6rem 0.2rem;">Card</button>
-          <button type="button" class="btn-secondary-custom" id="pay-method-bank" onclick="setPaymentMethod('bank_transfer', this)" style="justify-content:center;padding:0.6rem 0.2rem;">Bank</button>
-          <button type="button" class="btn-secondary-custom" id="pay-method-split" onclick="setPaymentMethod('split', this)" style="justify-content:center;padding:0.6rem 0.2rem;">Split</button>
+        <!-- Payment Method Selector Tiles -->
+        <label class="form-label-custom" style="font-weight:700; margin-bottom:8px; font-size:0.82rem; color:#374151; display:flex; justify-content:space-between; align-items:center;">
+          <span>SELECT PAYMENT METHOD</span>
+          <span style="font-size:0.72rem; font-weight:500; color:#9ca3af;">Tap to choose</span>
+        </label>
+        <div class="pay-methods-grid">
+          <button type="button" class="pay-method-card active-method" id="pay-method-cash" onclick="setPaymentMethod('cash', this)">
+            <div class="pay-method-icon"><i data-lucide="banknote"></i></div>
+            <span class="pay-method-name">Cash</span>
+            <div class="pay-check-indicator"><i data-lucide="check"></i></div>
+          </button>
+          <button type="button" class="pay-method-card" id="pay-method-card" onclick="setPaymentMethod('card', this)">
+            <div class="pay-method-icon"><i data-lucide="credit-card"></i></div>
+            <span class="pay-method-name">Card POS</span>
+            <div class="pay-check-indicator"><i data-lucide="check"></i></div>
+          </button>
+          <button type="button" class="pay-method-card" id="pay-method-bank" onclick="setPaymentMethod('bank_transfer', this)">
+            <div class="pay-method-icon"><i data-lucide="qr-code"></i></div>
+            <span class="pay-method-name">Bank / QR</span>
+            <div class="pay-check-indicator"><i data-lucide="check"></i></div>
+          </button>
+          <button type="button" class="pay-method-card" id="pay-method-split" onclick="setPaymentMethod('split', this)">
+            <div class="pay-method-icon"><i data-lucide="pie-chart"></i></div>
+            <span class="pay-method-name">Split Pay</span>
+            <div class="pay-check-indicator"><i data-lucide="check"></i></div>
+          </button>
         </div>
 
+        <!-- Cash Payment Section -->
         <div id="cash-payment-fields">
-          <label class="form-label-custom">Amount Tendered / Received</label>
-          <input type="number" id="tendered-amount" class="form-control-custom" style="font-size:1.25rem;font-weight:700;color:var(--text-main);" placeholder="0.00" oninput="calculateChange()">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label class="form-label-custom" style="margin:0; font-weight:700; font-size:0.82rem; color:#374151;">AMOUNT RECEIVED (TENDERED)</label>
+            <span style="font-size:0.72rem; color:#C95D7E; font-weight:600;">Cash in Hand</span>
+          </div>
+
+          <div class="tendered-input-wrapper">
+            <span class="currency-prefix-tag">LKR</span>
+            <input type="number" id="tendered-amount" class="tendered-input-field" placeholder="0.00" oninput="calculateChange()" step="any">
+          </div>
 
           <!-- Quick Cash Amount Suggestions -->
-          <div style="display:flex;gap:6px;margin-top:8px;" id="quick-cash-pills"></div>
+          <div class="quick-cash-container">
+            <span style="font-size:0.72rem; font-weight:700; color:#6b7280; text-transform:uppercase;">Quick Presets:</span>
+            <div id="quick-cash-pills" class="quick-cash-chips-row"></div>
+          </div>
 
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;padding:0.85rem;background:#ecfdf5;border-radius:var(--radius-md);">
-            <span style="font-weight:700;color:#065f46;">Change Due to Client:</span>
-            <span id="change-due-amount" style="font-weight:800;font-size:1.3rem;color:#059669;">LKR 0.00</span>
+          <!-- Change Due Banner -->
+          <div id="change-due-banner" class="change-banner-card">
+            <div style="display:flex; align-items:center; gap:8px; color:#065f46; font-weight:700;">
+              <i data-lucide="arrow-down-right" style="width:20px; height:20px;"></i>
+              <span>Change Due to Client:</span>
+            </div>
+            <span id="change-due-amount" style="font-weight:800; font-size:1.35rem; color:#059669;">LKR 0.00</span>
           </div>
         </div>
 
-        <div id="split-payment-fields" style="display:none;margin-top:1rem;">
-          <div style="display:flex;gap:8px;margin-bottom:8px;">
-            <input type="number" id="split-cash-amount" class="form-control-custom" placeholder="Cash Amount" oninput="calculateSplitChange()">
-            <input type="number" id="split-card-amount" class="form-control-custom" placeholder="Card Amount" oninput="calculateSplitChange()">
+        <!-- Split Payment Section -->
+        <div id="split-payment-fields" style="display:none; margin-top:0.75rem;">
+          <div style="background:#ffffff; border:1.5px solid #fbcfe8; border-radius:12px; padding:12px; margin-bottom:8px;">
+            <div style="font-size:0.8rem; font-weight:700; color:#9d174d; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+              <i data-lucide="pie-chart" style="width:16px; height:16px;"></i> Split Tender Breakdown
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+              <div>
+                <label style="font-size:0.75rem; font-weight:700; color:#4b5563; margin-bottom:4px; display:block;">Cash Amount (LKR)</label>
+                <input type="number" id="split-cash-amount" class="form-control-custom" style="font-weight:700; font-size:1rem; border-color:#fad3df;" placeholder="0.00" oninput="calculateSplitChange()">
+              </div>
+              <div>
+                <label style="font-size:0.75rem; font-weight:700; color:#4b5563; margin-bottom:4px; display:block;">Card Amount (LKR)</label>
+                <input type="number" id="split-card-amount" class="form-control-custom" style="font-weight:700; font-size:1rem; border-color:#fad3df;" placeholder="0.00" oninput="calculateSplitChange()">
+              </div>
+            </div>
+            <div id="split-balance-notice" style="margin-top:8px; font-size:0.78rem; text-align:center; padding:4px; border-radius:6px; background:#fff5f8;">
+              <!-- Split allocation feedback -->
+            </div>
           </div>
         </div>
 
-        <div style="margin-top:1rem;">
-          <label class="form-label-custom">Bill Notes / References (Optional)</label>
-          <input type="text" id="bill-notes" class="form-control-custom" placeholder="e.g. Card slip reference, Bridal remarks...">
+        <!-- Notes / Remarks -->
+        <div style="margin-top:0.85rem;">
+          <label class="form-label-custom" style="font-size:0.78rem; font-weight:600; color:#6b7280; margin-bottom:4px; display:flex; align-items:center; gap:5px;">
+            <i data-lucide="file-text" style="width:13px; height:13px;"></i> Bill Notes / Reference Slip (Optional)
+          </label>
+          <input type="text" id="bill-notes" class="form-control-custom" placeholder="e.g. Card POS auth code, bridal client notes, transfer ref..." style="background:#ffffff; font-size:0.85rem;">
         </div>
       </div>
 
-      <div class="modal-footer-custom">
-        <button class="btn-secondary-custom" onclick="closePaymentModal()">Cancel</button>
-        <button class="btn-primary-custom" id="btn-process-sale" onclick="processSaleCheckout()">
-          <i data-lucide="check"></i> Confirm Payment & Complete Sale
+      <!-- Luxury Footer Actions -->
+      <div class="modal-footer-custom" style="padding: 1rem 1.5rem; background: #ffffff; border-top: 1px solid rgba(201,93,126,0.15); display:flex; justify-content:space-between; align-items:center;">
+        <button type="button" class="btn-secondary-custom" onclick="closePaymentModal()" style="font-weight:600; padding:0.7rem 1.25rem; border-radius:10px;">
+          Cancel
+        </button>
+        <button type="button" class="btn-luxury-confirm" id="btn-process-sale" onclick="processSaleCheckout()">
+          <i data-lucide="sparkles" style="width:18px; height:18px;"></i>
+          <span>Confirm & Complete Sale</span>
+          <span class="kbd-enter-hint">↵ Enter</span>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- RECEIPT & INVOICE PRINT PREVIEW MODAL -->
+  <!-- RECEIPT & INVOICE PRINT PREVIEW MODAL (NEXT-LEVEL LUXURY DESIGN) -->
   <div class="modal-overlay" id="receipt-modal">
-    <div class="modal-card" style="max-width: 580px; max-height: 95vh; display:flex; flex-direction:column;">
-      <div class="modal-header-custom no-print" style="border-bottom:1px solid var(--border); padding-bottom: 0.75rem;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div style="width:36px; height:36px; border-radius:50%; background:#dcfce7; display:flex; align-items:center; justify-content:center; color:#16a34a;">
-            <i data-lucide="check-circle" style="width:22px; height:22px;"></i>
+    <div class="modal-card receipt-modal-card" style="max-width: 580px; max-height: 95vh; display:flex; flex-direction:column; border-radius: 20px; overflow:hidden; box-shadow: 0 25px 60px rgba(15, 23, 42, 0.3); border: 1px solid rgba(201, 93, 126, 0.25);">
+      <!-- Header -->
+      <div class="modal-header-custom no-print" style="border-bottom:1px solid #fce7ec; padding: 1rem 1.5rem; background: linear-gradient(135deg, #ffffff 0%, #fff7fa 100%);">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="sale-success-badge">
+            <i data-lucide="check-circle-2" style="width:24px; height:24px;"></i>
           </div>
           <div>
-            <h3 class="card-title-clean" style="margin:0; font-size:1.15rem;">Sale Completed!</h3>
-            <span style="font-size:0.75rem; color:var(--text-muted);">Invoice created, payment recorded & stock deducted</span>
+            <h3 class="card-title-clean" style="margin:0; font-size:1.2rem; font-weight:800; color:#111827; font-family:'Playfair Display', Georgia, serif;">Sale Completed!</h3>
+            <span style="font-size:0.78rem; color:#6b7280;">Payment confirmed &bull; Receipt generated &bull; Ready to print</span>
           </div>
         </div>
-        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeReceiptModal()"><i data-lucide="x"></i></button>
+        <button class="btn-close-modal" style="background:#f3f4f6; border:none; cursor:pointer; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onclick="closeReceiptModal()"><i data-lucide="x" style="width:18px; height:18px;"></i></button>
       </div>
 
       <!-- Format Switcher Tabs -->
-      <div class="no-print" style="padding: 0.75rem 1.25rem 0; display:flex; gap:8px; background: #fff5f8; border-bottom: 1px solid #fce7ec;">
-        <button id="tab-btn-thermal" class="btn-secondary-custom" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 8px 8px 0 0; background:#fff; border-bottom-color:transparent; font-weight:700; color:var(--primary);" onclick="switchReceiptTab('thermal')">
-          <i data-lucide="receipt" style="width:15px;"></i> 80mm Thermal Receipt
+      <div class="no-print receipt-tab-bar">
+        <button id="tab-btn-thermal" class="receipt-tab-pill active" onclick="switchReceiptTab('thermal')">
+          <i data-lucide="receipt" style="width:16px; height:16px;"></i>
+          <span>80mm Thermal Receipt (POS)</span>
         </button>
-        <button id="tab-btn-a4" class="btn-secondary-custom" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 8px 8px 0 0; opacity: 0.8;" onclick="switchReceiptTab('a4')">
-          <i data-lucide="file-text" style="width:15px;"></i> Luxury A4 Tax Invoice
+        <button id="tab-btn-a4" class="receipt-tab-pill" onclick="switchReceiptTab('a4')">
+          <i data-lucide="file-text" style="width:16px; height:16px;"></i>
+          <span>Half A4 (A5) Tax Invoice</span>
         </button>
       </div>
 
       <!-- Preview Body -->
-      <div class="modal-body-custom a4-preview-scroll" style="padding: 1.25rem; background: #fdf2f5; flex:1;">
-        <div id="receipt-print-area">
+      <div class="modal-body-custom receipt-preview-body" style="padding: 1.25rem; background: #eef2f6; flex:1; overflow-y:auto; display:flex; justify-content:center;">
+        <div id="receipt-print-area" class="receipt-paper-stage">
           <!-- Dynamically populated luxury receipt / invoice -->
         </div>
       </div>
 
       <!-- Actions Footer -->
-      <div class="modal-footer-custom no-print" style="padding: 0.85rem 1.25rem; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; border-top:1px solid var(--border);">
-        <button class="btn-secondary-custom" onclick="closeReceiptModal()" style="font-size:0.85rem;">
-          <i data-lucide="plus"></i> New Sale
+      <div class="modal-footer-custom no-print" style="padding: 0.9rem 1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; background:#ffffff; border-top:1px solid #f3f4f6;">
+        <button class="btn-secondary-custom" onclick="closeReceiptModal()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.15rem; border-radius:10px; display:inline-flex; align-items:center; gap:6px;">
+          <i data-lucide="plus" style="width:16px; height:16px;"></i> New Sale
         </button>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;" id="receipt-action-buttons">
+        <div style="display:flex; gap:10px; flex-wrap:wrap;" id="receipt-action-buttons">
           <!-- Populated based on active tab -->
         </div>
       </div>

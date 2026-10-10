@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Salaries & Payroll — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <link rel="stylesheet" href="../css/print.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="../js/html2pdf.bundle.min.js"></script>
+  <style>
+    .metrics-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .metric-card-custom {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.15rem 1.25rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .metric-micro-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .metric-large-num {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .calc-box-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      background: #faf7f8;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .calc-section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary-dark);
+      margin-bottom: 0.65rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-badge-paid {
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .status-badge-pending {
+      background: #fffbeb;
+      color: #d97706;
+      border: 1px solid #fde68a;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .target-pill-unlocked {
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .target-pill-locked {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .chip-preset {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      color: #374151;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+    }
+    .chip-preset:hover {
+      background: #872341;
+      border-color: #872341;
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+    .expense-item-row {
+      display: grid;
+      grid-template-columns: 1fr 140px 36px;
+      gap: 8px;
+      align-items: center;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 6px 10px;
+      transition: all 0.2s ease;
+    }
+    .expense-item-row:hover {
+      border-color: #d1d5db;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    /* Luxury Printable Payslip */
+    .payslip-container {
+      background: #ffffff;
+      padding: 2rem;
+      border-radius: 12px;
+      color: #1f2937;
+      font-family: var(--font-sans);
+    }
+    .payslip-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #f1dde5;
+      padding-bottom: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .payslip-grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .payslip-breakdown-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+    }
+    .payslip-breakdown-table th {
+      background: #faf7f8;
+      padding: 8px 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+    .payslip-breakdown-table td {
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Sidebar Placeholder -->
+    <div id="app-sidebar-placeholder"></div>
+
+    <!-- Main Content -->
+    <main class="app-main">
+      <!-- Topbar Placeholder -->
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+
+        <!-- Top Header & Actions -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h2 style="font-size:1.35rem;font-weight:700;margin:0 0 4px;color:#111827;">Staff Salary & Payroll Management</h2>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin:0;">
+              Basic salary (LKR 20,000), monthly target tracking (LKR 500,000), overhead deductions & 15% net incentive calculations
+            </p>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn-primary-custom" onclick="openSalaryCalculatorModal()">
+              <i data-lucide="calculator"></i> Calculate / Generate Salary
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Controls Strip -->
+        <div style="background:#ffffff; border:1px solid var(--border); border-radius:var(--radius-md); padding:1rem 1.25rem; margin-bottom:1.5rem; display:flex; gap:12px; align-items:center; flex-wrap:wrap; box-shadow:var(--shadow-sm);">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted);">Month:</label>
+            <select id="filter-month" class="form-select-custom" style="padding:0.4rem 0.8rem; font-size:0.82rem;" onchange="loadSalaryLedger()">
+              <option value="">All Months</option>
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted);">Year:</label>
+            <select id="filter-year" class="form-select-custom" style="padding:0.4rem 0.8rem; font-size:0.82rem;" onchange="loadSalaryLedger()">
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+              <option value="2027">2027</option>
+            </select>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted);">Staff:</label>
+            <select id="filter-staff" class="form-select-custom" style="padding:0.4rem 0.8rem; font-size:0.82rem;" onchange="loadSalaryLedger()">
+              <option value="">All Stylists & Staff</option>
+            </select>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted);">Status:</label>
+            <select id="filter-status" class="form-select-custom" style="padding:0.4rem 0.8rem; font-size:0.82rem;" onchange="loadSalaryLedger()">
+              <option value="">All Statuses</option>
+              <option value="paid">Paid</option>
+              <option value="pending">Pending</option>
+            </select>
+          </div>
+
+          <button class="btn-secondary-custom" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="resetFilters()">
+            <i data-lucide="rotate-ccw"></i> Reset
+          </button>
+        </div>
+
+        <!-- 4 Executive KPI Metrics Cards -->
+        <div class="metrics-summary-grid">
+          <div class="metric-card-custom">
+            <div class="metric-micro-label"><i data-lucide="wallet"></i> Total Payroll Disbursed</div>
+            <div class="metric-large-num" id="kpi-total-disbursed">LKR 0.00</div>
+            <span style="font-size:0.75rem; color:var(--text-muted);" id="kpi-paid-count">0 paid salary slips</span>
+          </div>
+
+          <div class="metric-card-custom">
+            <div class="metric-micro-label"><i data-lucide="target"></i> Monthly Salon Revenue Target</div>
+            <div class="metric-large-num" style="color:#2563eb;">LKR 500,000.00</div>
+            <span style="font-size:0.75rem; color:#059669; font-weight:600;" id="kpi-target-status">15% Net Incentive Rule Active</span>
+          </div>
+
+          <div class="metric-card-custom">
+            <div class="metric-micro-label"><i data-lucide="award"></i> 15% Incentive Pool Paid</div>
+            <div class="metric-large-num" style="color:#059669;" id="kpi-incentive-pool">LKR 0.00</div>
+            <span style="font-size:0.75rem; color:var(--text-muted);">From remaining net operating balance</span>
+          </div>
+
+          <div class="metric-card-custom">
+            <div class="metric-micro-label"><i data-lucide="clock"></i> Pending Salaries</div>
+            <div class="metric-large-num" style="color:#d97706;" id="kpi-pending-total">LKR 0.00</div>
+            <span style="font-size:0.75rem; color:var(--text-muted);" id="kpi-pending-count">0 pending approvals</span>
+          </div>
+        </div>
+
+        <!-- Salary Slips Ledger Table -->
+        <div class="table-custom-container">
+          <div style="padding:1rem 1.25rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="font-size:1.05rem; font-weight:700; margin:0; color:#111827;">Monthly Salary Records</h3>
+            <span style="font-size:0.78rem; color:var(--text-muted);" id="records-count-badge">Loading...</span>
+          </div>
+
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Slip #</th>
+                <th>Staff Member</th>
+                <th>Pay Period</th>
+                <th>Basic Salary</th>
+                <th>Target & Revenue</th>
+                <th>Overhead Deductions</th>
+                <th>15% Incentive</th>
+                <th>Total Net Salary</th>
+                <th>Status</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="salaries-table-body">
+              <tr>
+                <td colspan="10" style="text-align:center; padding:3rem; color:var(--text-muted);">
+                  Loading staff payroll ledger...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 1: INTERACTIVE SALARY CALCULATOR & SLIP GENERATOR
+       ========================================================================== -->
+  <div class="modal-overlay" id="salary-calc-modal">
+    <div class="modal-card" style="max-width: 780px; max-height: 92vh; overflow-y:auto;">
+      <div class="modal-header-custom" style="position:sticky; top:0; background:#fff; z-index:10; border-bottom:1px solid var(--border);">
+        <div>
+          <h3 class="card-title-clean" id="modal-calc-title" style="margin:0;">Staff Salary Calculator & Generator</h3>
+          <span style="font-size:0.75rem; color:var(--text-muted);">Basic salary (LKR 20,000), monthly target (500,000) & 15% net profit incentive</span>
+        </div>
+        <button class="btn-close-modal" onclick="closeSalaryCalculatorModal()"><i data-lucide="x"></i></button>
+      </div>
+
+      <div class="modal-body-custom" style="padding:1.5rem;">
+        
+        <!-- Step 1: Staff and Pay Period Selection -->
+        <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:12px; margin-bottom:1.25rem;">
+          <div>
+            <label class="form-label-custom">Select Staff / Stylist *</label>
+            <select id="calc-staff-id" class="form-select-custom" onchange="onStaffOrPeriodChange(false)">
+              <option value="">Select Stylist...</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label-custom">Pay Month *</label>
+            <select id="calc-month" class="form-select-custom" onchange="onStaffOrPeriodChange(true)">
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label-custom">Pay Year *</label>
+            <input type="number" id="calc-year" class="form-control-custom" value="2026" onchange="onStaffOrPeriodChange(true)">
+          </div>
+        </div>
+
+        <!-- Section 1: Salon Revenue & Monthly Target -->
+        <div style="background:#fdf9fb; border:1px solid #f6dbe5; border-radius:12px; padding:1.15rem; margin-bottom:1.25rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+            <div class="calc-section-label" style="margin:0;"><i data-lucide="target"></i> Salon Revenue & Monthly Target</div>
+            <div id="calc-target-badge" class="target-pill-unlocked">Target Status</div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div>
+              <label class="form-label-custom">Monthly Salon Target (LKR)</label>
+              <input type="number" id="calc-target" class="form-control-custom" value="500000" oninput="runLiveRecalculation()">
+              <span style="font-size:0.7rem; color:var(--text-muted);">Default target: LKR 500,000 (Editable)</span>
+            </div>
+            <div>
+              <label class="form-label-custom">Total Monthly Revenue (LKR)</label>
+              <input type="number" id="calc-revenue" class="form-control-custom" value="0" oninput="runLiveRecalculation()">
+              <span style="font-size:0.7rem; color:var(--primary);" id="calc-revenue-hint">Auto-fetched from sales (Editable)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Operational Expenses to Deduct (Dynamic & Editable) -->
+        <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:12px; padding:1.15rem; margin-bottom:1.25rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; gap:8px;">
+            <div class="calc-section-label" style="margin:0; color:#374151;">
+              <i data-lucide="receipt"></i> Operational Expenses to Deduct (Editable)
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span style="font-size:0.78rem; font-weight:800; color:#dc2626; background:#fee2e2; padding:3px 10px; border-radius:999px;" id="calc-total-deductions-label">
+                Total Deductions: LKR 0.00
+              </span>
+              <button type="button" class="btn-sm-custom" onclick="syncOperationalExpensesFromDB()" title="Auto-pull all expenses logged in Operational Expenses page for this month" style="background:#0f172a; color:#fff; padding:4px 10px; font-size:0.75rem; font-weight:700; border-radius:6px; border:none; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i> Sync Expenses Page
+              </button>
+              <button type="button" class="btn-sm-custom" onclick="addNewExpenseItem()" style="background:#872341; color:#fff; padding:4px 10px; font-size:0.75rem; font-weight:700; border-radius:6px; border:none; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Expense Item
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Add Preset Chips -->
+          <div style="margin-bottom:0.85rem;">
+            <div style="font-size:0.7rem; color:var(--text-muted); font-weight:600; margin-bottom:5px;">QUICK-ADD COMMON OVERHEADS:</div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+              <button type="button" class="chip-preset" onclick="addPresetExpenseItem('🏢 Shop Rent', 0)">+ Shop Rent</button>
+              <button type="button" class="chip-preset" onclick="addPresetExpenseItem('⚡ Electricity Bill', 0)">+ Electricity Bill</button>
+              <button type="button" class="chip-preset" onclick="addPresetExpenseItem('💧 Water Bill', 0)">+ Water Bill</button>
+              <button type="button" class="chip-preset" onclick="addPresetExpenseItem('💵 Petty Cash & Misc', 0)">+ Petty Cash</button>
+              <button type="button" class="chip-preset" onclick="addPresetExpenseItem('🌐 Internet & Wi-Fi', 0)">+ Internet / Wi-Fi</button>
+              <button type="button" class="chip-preset" onclick="addPresetExpenseItem('☕ Staff Tea & Refreshments', 0)">+ Staff Tea</button>
+              <button type="button" class="chip-preset" onclick="addPresetExpenseItem('🧴 Cleaning & Consumables', 0)">+ Cleaning</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Expense Items Container -->
+          <div id="expense-items-container" style="display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto; padding-right:2px;">
+            <!-- Rows rendered dynamically by JS -->
+          </div>
+
+          <!-- Hidden inputs for backward compatibility -->
+          <input type="hidden" id="calc-electricity" value="0">
+          <input type="hidden" id="calc-rent" value="0">
+          <input type="hidden" id="calc-petty-cash" value="0">
+          <input type="hidden" id="calc-other-deductions" value="0">
+        </div>
+
+        <!-- Section 3: Net Operating Profit & Incentive Share (Editable %) -->
+        <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:12px; padding:1.15rem; margin-bottom:1.25rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; gap:8px;">
+            <div style="font-size:0.8rem; font-weight:800; color:#065f46; display:flex; align-items:center; gap:6px;">
+              <i data-lucide="trending-up" style="width:16px;height:16px;"></i> NET PROFIT & INCENTIVE SHARE
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <label for="calc-incentive-percentage" style="font-size:0.75rem; font-weight:700; color:#065f46; text-transform:uppercase;">Profit Share %:</label>
+              <div style="position:relative; width:82px;">
+                <input type="number" id="calc-incentive-percentage" class="form-control-custom" value="15" min="0" max="100" step="0.5" style="padding:4px 22px 4px 8px; font-size:0.85rem; height:30px; font-weight:800; text-align:right; border-color:#6ee7b7; color:#065f46; background:#fff;" oninput="runLiveRecalculation()">
+                <span style="position:absolute; right:7px; top:50%; transform:translateY(-50%); font-size:0.75rem; font-weight:800; color:#065f46;">%</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; align-items:center;">
+            <div>
+              <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:#065f46;">Net Profit (Revenue − Overheads)</span>
+              <div style="font-size:1.35rem; font-weight:800; color:#059669;" id="calc-remaining-amount">LKR 0.00</div>
+              <span style="font-size:0.72rem; color:#047857;" id="calc-remaining-amount-hint">Monthly income after deducting all operational expenses</span>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:#065f46;" id="calc-incentive-share-title">15% Net Profit Share</span>
+              <div style="font-size:1.35rem; font-weight:800; color:#059669;" id="calc-incentive-amount">+ LKR 0.00</div>
+              <span style="font-size:0.72rem; color:#047857; font-weight:600;" id="calc-incentive-status">15% of Net Profit added directly to employee salary</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Basic Salary & Adjustments -->
+        <div style="background:#faf7f8; border:1px solid var(--border); border-radius:12px; padding:1.15rem; margin-bottom:1.25rem;">
+          <div class="calc-section-label"><i data-lucide="user"></i> Staff Basic Remuneration & Adjustments</div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+            <div>
+              <label class="form-label-custom">Basic Salary (LKR) *</label>
+              <input type="number" id="calc-basic-salary" class="form-control-custom" value="20000" oninput="runLiveRecalculation()">
+              <span style="font-size:0.7rem; color:var(--text-muted);">Default: LKR 20,000 (Editable)</span>
+            </div>
+            <div>
+              <label class="form-label-custom">➕ Allowances (LKR)</label>
+              <input type="number" id="calc-allowances" class="form-control-custom" value="0" placeholder="0.00" oninput="runLiveRecalculation()">
+              <span style="font-size:0.7rem; color:var(--text-muted);">Travel, attendance, etc.</span>
+            </div>
+            <div>
+              <label class="form-label-custom">➖ Advances / Loans (LKR)</label>
+              <input type="number" id="calc-advances" class="form-control-custom" value="0" placeholder="0.00" oninput="runLiveRecalculation()">
+              <span style="font-size:0.7rem; color:var(--danger);">Deducted from salary</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grand Net Payable Highlight Box -->
+        <div style="background:linear-gradient(135deg, #fff0f5 0%, #fde8ef 100%); border:2px solid var(--primary-light); border-radius:14px; padding:1.25rem; display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+          <div>
+            <span style="font-size:0.75rem; text-transform:uppercase; font-weight:800; letter-spacing:0.5px; color:var(--primary-dark);">TOTAL NET SALARY PAYABLE</span>
+            <div style="font-size:1.85rem; font-weight:800; color:var(--primary-dark); font-family:'Plus Jakarta Sans',sans-serif;" id="calc-grand-net-salary">LKR 20,000.00</div>
+            <span style="font-size:0.75rem; color:var(--text-muted);" id="calc-formula-summary">Basic (20k) + 15% Incentive (0) = 20,000.00</span>
+          </div>
+          <div style="text-align:right;">
+            <span class="badge badge-rose" style="font-size:0.8rem; padding:4px 10px;">Salon Vellora Payroll</span>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-custom">Payroll Notes / Comments (Optional)</label>
+          <input type="text" id="calc-notes" class="form-control-custom" placeholder="e.g. Target achieved bonus, electricity adjustment remarks...">
+        </div>
+
+      </div>
+
+      <div class="modal-footer-custom" style="position:sticky; bottom:0; background:#fff; z-index:10; border-top:1px solid var(--border); display:flex; justify-content:space-between;">
+        <button type="button" class="btn-secondary-custom" onclick="closeSalaryCalculatorModal()">Cancel</button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn-primary-custom" onclick="saveSalarySlip('pending')">
+            <i data-lucide="save"></i> Save as Pending Slip
+          </button>
+          <button type="button" class="btn-primary-custom" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%);" onclick="saveSalarySlip('paid')">
+            <i data-lucide="check-circle-2"></i> Save & Mark as Paid
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 2: PRINTABLE LUXURY PAYSLIP (A4 & DOWNLOADABLE PDF)
+       ========================================================================== -->
+  <div class="modal-overlay" id="payslip-modal">
+    <div class="modal-card" style="max-width: 680px; max-height: 92vh; display:flex; flex-direction:column;">
+      <div class="modal-header-custom no-print" style="border-bottom:1px solid var(--border);">
+        <h3 class="card-title-clean" style="margin:0;">Official Salary Slip</h3>
+        <button class="btn-close-modal" onclick="closePayslipModal()"><i data-lucide="x"></i></button>
+      </div>
+
+      <div class="modal-body-custom" style="padding:1.5rem; overflow-y:auto; flex:1; background:#faf7f8;">
+        <!-- Printable Payslip Area -->
+        <div id="payslip-printable-area" class="payslip-container">
+          <!-- Dynamically populated by JS -->
+        </div>
+      </div>
+
+      <div class="modal-footer-custom no-print" style="border-top:1px solid var(--border); display:flex; justify-content:space-between;">
+        <button type="button" class="btn-secondary-custom" onclick="closePayslipModal()">Close</button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn-primary-custom" onclick="downloadPayslipPDF()">
+            <i data-lucide="download"></i> Download PDF
+          </button>
+          <button type="button" class="btn-primary-custom" onclick="printPayslip()">
+            <i data-lucide="printer"></i> Print Payslip
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 3: MARK AS PAID MODAL
+       ========================================================================== -->
+  <div class="modal-overlay" id="mark-paid-modal">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean">Mark Salary as Paid</h3>
+        <button class="btn-close-modal" onclick="closeMarkPaidModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body-custom">
+        <input type="hidden" id="pay-slip-id">
+        <div style="text-align:center; padding:1rem; background:#ecfdf5; border-radius:10px; margin-bottom:1.25rem;">
+          <span style="font-size:0.75rem; color:#065f46; font-weight:700; text-transform:uppercase;">Net Amount to Disburse</span>
+          <div style="font-size:1.65rem; font-weight:800; color:#059669;" id="pay-modal-amount">LKR 0.00</div>
+          <span style="font-size:0.8rem; color:#047857;" id="pay-modal-staff-name">Staff Member</span>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-custom">Payment Method *</label>
+          <select id="pay-method-select" class="form-select-custom">
+            <option value="cash">Cash Payment</option>
+            <option value="bank_transfer" selected>Bank Transfer (Commercial Bank)</option>
+            <option value="cheque">Cheque</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-custom">Payment Date *</label>
+          <input type="date" id="pay-date-input" class="form-control-custom">
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <label class="form-label-custom">Transaction Ref / Cheque No (Optional)</label>
+          <input type="text" id="pay-ref-input" class="form-control-custom" placeholder="e.g. Transfer Ref #84920">
+        </div>
+      </div>
+      <div class="modal-footer-custom">
+        <button class="btn-secondary-custom" onclick="closeMarkPaidModal()">Cancel</button>
+        <button class="btn-primary-custom" onclick="submitMarkAsPaid()">
+          <i data-lucide="check"></i> Confirm Disbursal
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/salaries.js"></script>
+</body>
+</html>

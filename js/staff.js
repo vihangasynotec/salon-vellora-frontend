@@ -34,15 +34,19 @@ async function loadStaff() {
         <td>${s.specialization || '-'}</td>
         <td>${s.phone || '-'}</td>
         <td style="font-weight:600;">${common.formatCurrency(s.base_salary || 0)}</td>
-        <td><span class="badge-custom badge-success">${s.commission_rate || 0}%</span></td>
         <td><span class="badge-custom badge-${s.status === 'active' ? 'success' : 'danger'}">${s.status}</span></td>
-        <td style="text-align:right;">
-          <button class="btn-soft-pink" style="padding:4px 8px;font-size:0.75rem;" onclick="viewStaffPerformance(${s.id})" title="View Commission & Sales">
-            <i data-lucide="bar-chart-2" style="width:14px;"></i> Performance
-          </button>
-          <button class="btn-secondary-custom" style="padding:4px 8px;font-size:0.75rem;" onclick="openEditStaffModal(${s.id})">
-            <i data-lucide="edit-3" style="width:14px;"></i>
-          </button>
+        <td style="text-align:right; white-space:nowrap;">
+          <div style="display:inline-flex; gap:6px; justify-content:flex-end;">
+            <button class="btn-soft-pink" style="padding:4px 8px;font-size:0.75rem;" onclick="viewStaffPerformance(${s.id})" title="View Commission & Sales">
+              <i data-lucide="bar-chart-2" style="width:14px;height:14px;"></i> Performance
+            </button>
+            <button class="btn-secondary-custom" style="padding:4px 8px;font-size:0.75rem;" onclick="openEditStaffModal(${s.id})" title="Edit Profile">
+              <i data-lucide="edit-3" style="width:14px;height:14px;"></i>
+            </button>
+            <button class="btn-secondary-custom" style="padding:4px 8px;font-size:0.75rem; color:var(--danger);" onclick="deleteStaffMember(${s.id}, '${escapeHtml(s.name)}')" title="Delete Staff Member">
+              <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+            </button>
+          </div>
         </td>
       </tr>
     `).join("");
@@ -63,8 +67,7 @@ function openStaffModal() {
   document.getElementById("s-desig").value = "Senior Stylist";
   document.getElementById("s-phone").value = "";
   document.getElementById("s-spec").value = "";
-  document.getElementById("s-salary").value = "50000";
-  document.getElementById("s-comm").value = "8";
+  document.getElementById("s-salary").value = "20000";
   document.getElementById("s-email").value = "";
 
   document.getElementById("staff-modal").classList.add("active");
@@ -82,7 +85,6 @@ function openEditStaffModal(id) {
   document.getElementById("s-phone").value = s.phone || "";
   document.getElementById("s-spec").value = s.specialization || "";
   document.getElementById("s-salary").value = s.base_salary;
-  document.getElementById("s-comm").value = s.commission_rate;
   document.getElementById("s-email").value = s.email || "";
 
   document.getElementById("staff-modal").classList.add("active");
@@ -102,8 +104,7 @@ async function handleSaveStaff(e) {
     designation: document.getElementById("s-desig").value.trim(),
     phone: document.getElementById("s-phone").value.trim() || undefined,
     specialization: document.getElementById("s-spec").value.trim() || undefined,
-    base_salary: parseFloat(document.getElementById("s-salary").value) || 0,
-    commission_rate: parseFloat(document.getElementById("s-comm").value) || 0,
+    base_salary: parseFloat(document.getElementById("s-salary").value) || 20000,
     email: document.getElementById("s-email").value.trim() || undefined,
   };
 
@@ -186,3 +187,48 @@ async function viewStaffPerformance(id) {
 function closeStaffPerfModal() {
   document.getElementById("staff-perf-modal").classList.remove("active");
 }
+
+/**
+ * Delete a staff member
+ */
+function deleteStaffMember(id, name) {
+  common.showConfirm({
+    title: "Delete Staff Member?",
+    message: `Are you sure you want to delete "${name || 'this stylist'}"? This staff profile will be removed from active staff records.`,
+    confirmText: "Yes, Delete",
+    isDanger: true,
+    onConfirm: async () => {
+      try {
+        const apiClient = window.api || window.API;
+        const res = await apiClient.delete(`/staff/${id}`);
+        if (res && res.success) {
+          common.showToast(res.message || "Staff member deleted successfully.", "success");
+          loadStaff();
+        } else {
+          common.showToast(res?.message || "Failed to delete staff member.", "error");
+        }
+      } catch (err) {
+        console.error("Delete staff error:", err);
+        common.showToast(err.message || "Failed to delete staff member.", "error");
+      }
+    }
+  });
+}
+
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+window.deleteStaffMember = deleteStaffMember;
+window.openStaffModal = openStaffModal;
+window.closeStaffModal = closeStaffModal;
+window.openEditStaffModal = openEditStaffModal;
+window.viewStaffPerformance = viewStaffPerformance;
+window.closeStaffPerfModal = closeStaffPerfModal;
+window.handleSaveStaff = handleSaveStaff;

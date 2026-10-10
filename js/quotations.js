@@ -150,7 +150,7 @@ function printQuotationA4() {
 function downloadQuotationA4Pdf() {
   if (!currentViewingQuote) return;
   const html = PrintEngine.generateA4Quotation(currentViewingQuote);
-  PrintEngine.downloadAsPdf(html, `Salon_Vellora_Quotation_${currentViewingQuote.quotation_number}.pdf`, false);
+  PrintEngine.downloadAsPdf(html, `Salon_Vellora_Quotation_${currentViewingQuote.quotation_number}.pdf`, 'a4');
 }
 
 async function updateQuotationStatus(id, newStatus) {

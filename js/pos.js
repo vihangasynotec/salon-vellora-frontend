@@ -425,7 +425,7 @@ function recalculateTotals() {
   document.getElementById("cart-grand-total").innerText = common.formatCurrency(grandTotal);
 }
 
-// Payment Modal & Methods
+// Payment Modal & Methods (Next-Level Luxury UX)
 function openPaymentModal() {
   if (currentCart.items.length === 0) {
     common.showToast("Cart is empty. Please add items before checking out.", "warning");
@@ -433,6 +433,14 @@ function openPaymentModal() {
   }
 
   recalculateTotals();
+
+  // Populate client badge & items count badge
+  const custName = currentCart.customer ? currentCart.customer.name : "Walk-in Client";
+  const totalItemsCount = currentCart.items.reduce((sum, i) => sum + (i.quantity || 1), 0);
+  const clientInfoEl = document.getElementById("modal-client-info");
+  if (clientInfoEl) {
+    clientInfoEl.innerHTML = `<i data-lucide="user" style="width:12px;height:12px;"></i> ${custName} &bull; ${totalItemsCount} item${totalItemsCount > 1 ? 's' : ''}`;
+  }
 
   document.getElementById("modal-due-amount").innerText = common.formatCurrency(currentCart.grand_total);
   document.getElementById("tendered-amount").value = currentCart.grand_total;
@@ -442,6 +450,15 @@ function openPaymentModal() {
   setPaymentMethod('cash');
   document.getElementById("payment-modal").classList.add("active");
   if (window.lucide) lucide.createIcons();
+
+  // Auto-focus tendered input for fast typing
+  setTimeout(() => {
+    const input = document.getElementById("tendered-amount");
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }, 100);
 }
 
 function closePaymentModal() {
@@ -450,8 +467,10 @@ function closePaymentModal() {
 
 function setPaymentMethod(method, btn) {
   currentPaymentMethod = method;
-  document.querySelectorAll("[id^='pay-method-']").forEach(b => b.classList.remove("btn-primary-custom"));
-  document.getElementById(`pay-method-${method === 'bank_transfer' ? 'bank' : method}`).classList.add("btn-primary-custom");
+  document.querySelectorAll(".pay-method-card").forEach(b => b.classList.remove("active-method"));
+  
+  const targetBtn = btn || document.getElementById(`pay-method-${method === 'bank_transfer' ? 'bank' : method}`);
+  if (targetBtn) targetBtn.classList.add("active-method");
 
   const cashFields = document.getElementById("cash-payment-fields");
   const splitFields = document.getElementById("split-payment-fields");
@@ -459,27 +478,59 @@ function setPaymentMethod(method, btn) {
   if (method === 'split') {
     cashFields.style.display = 'none';
     splitFields.style.display = 'block';
-    document.getElementById("split-cash-amount").value = Math.round(currentCart.grand_total / 2);
-    document.getElementById("split-card-amount").value = Math.round(currentCart.grand_total / 2);
+    const half = Math.round((currentCart.grand_total / 2) * 100) / 100;
+    const remainder = Math.round((currentCart.grand_total - half) * 100) / 100;
+    document.getElementById("split-cash-amount").value = half;
+    document.getElementById("split-card-amount").value = remainder;
+    calculateSplitChange();
   } else {
     cashFields.style.display = 'block';
     splitFields.style.display = 'none';
+    
+    // If card or bank transfer, default tendered amount to exact total
+    if (method === 'card' || method === 'bank_transfer') {
+      document.getElementById("tendered-amount").value = currentCart.grand_total;
+      calculateChange();
+    }
   }
 }
 
 function renderQuickCashSuggestions(total) {
   const container = document.getElementById("quick-cash-pills");
+  if (!container) return;
+
   const suggestions = [
-    Math.ceil(total),
-    Math.ceil(total / 1000) * 1000,
-    Math.ceil(total / 5000) * 5000,
-    Math.ceil(total / 10000) * 1000,
+    { label: `Exact (LKR ${total.toLocaleString()})`, val: total, isExact: true },
   ];
 
-  const uniqueSugg = [...new Set(suggestions)].filter(s => s >= total);
+  // Useful cash increments
+  if (total > 0) {
+    const next1k = Math.ceil(total / 1000) * 1000;
+    if (next1k > total) suggestions.push({ label: `LKR ${next1k.toLocaleString()}`, val: next1k });
+
+    const next5k = Math.ceil(total / 5000) * 5000;
+    if (next5k > total && next5k !== next1k) suggestions.push({ label: `LKR ${next5k.toLocaleString()}`, val: next5k });
+
+    const next10k = Math.ceil(total / 10000) * 10000;
+    if (next10k > total && next10k !== next5k && next10k !== next1k) suggestions.push({ label: `LKR ${next10k.toLocaleString()}`, val: next10k });
+
+    // Also quick +1,000 and +5,000 buttons
+    suggestions.push({ label: `+ 1,000`, val: total + 1000 });
+    suggestions.push({ label: `+ 5,000`, val: total + 5000 });
+  }
+
+  // De-duplicate values
+  const seen = new Set();
+  const uniqueSugg = suggestions.filter(s => {
+    if (seen.has(s.val)) return false;
+    seen.add(s.val);
+    return true;
+  });
 
   container.innerHTML = uniqueSugg.map(s => `
-    <button type="button" class="role-quick-btn" onclick="setTendered(${s})">LKR ${s.toLocaleString()}</button>
+    <button type="button" class="quick-cash-chip ${s.isExact ? 'exact-chip' : ''}" onclick="setTendered(${s.val})">
+      ${s.label}
+    </button>
   `).join("");
 }
 
@@ -490,20 +541,86 @@ function setTendered(val) {
 
 function calculateChange() {
   const tendered = parseFloat(document.getElementById("tendered-amount").value) || 0;
-  const change = Math.max(0, tendered - currentCart.grand_total);
-  document.getElementById("change-due-amount").innerText = common.formatCurrency(change);
+  const grandTotal = currentCart.grand_total || 0;
+  const banner = document.getElementById("change-due-banner");
+  if (!banner) return;
+
+  if (tendered > grandTotal) {
+    const change = tendered - grandTotal;
+    banner.style.background = "#ecfdf5";
+    banner.style.borderColor = "#a7f3d0";
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;color:#065f46;font-weight:700;">
+        <i data-lucide="arrow-down-right" style="width:20px;height:20px;"></i>
+        <span>Change Due to Client:</span>
+      </div>
+      <span id="change-due-amount" style="font-weight:800;font-size:1.35rem;color:#059669;">${common.formatCurrency(change)}</span>
+    `;
+  } else if (tendered === grandTotal) {
+    banner.style.background = "#f0fdf4";
+    banner.style.borderColor = "#bbf7d0";
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;color:#166534;font-weight:700;font-size:0.88rem;">
+        <i data-lucide="check-circle-2" style="width:18px;height:18px;color:#16a34a;"></i>
+        <span>Exact Payment Received &bull; No Change Required</span>
+      </div>
+      <span id="change-due-amount" style="font-weight:800;font-size:1.15rem;color:#16a34a;">LKR 0.00</span>
+    `;
+  } else {
+    const diff = grandTotal - tendered;
+    banner.style.background = "#fff1f2";
+    banner.style.borderColor = "#fecdd3";
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;color:#9f1239;font-weight:700;font-size:0.88rem;">
+        <i data-lucide="alert-circle" style="width:18px;height:18px;color:#e11d48;"></i>
+        <span>Remaining Balance Due:</span>
+      </div>
+      <span id="change-due-amount" style="font-weight:800;font-size:1.25rem;color:#e11d48;">${common.formatCurrency(diff)}</span>
+    `;
+  }
+
+  if (window.lucide) lucide.createIcons();
 }
 
 function calculateSplitChange() {
   const cash = parseFloat(document.getElementById("split-cash-amount").value) || 0;
   const card = parseFloat(document.getElementById("split-card-amount").value) || 0;
-  // Live validation
+  const total = cash + card;
+  const grandTotal = currentCart.grand_total || 0;
+  const diff = grandTotal - total;
+  const notice = document.getElementById("split-balance-notice");
+  if (!notice) return;
+
+  if (Math.abs(diff) < 0.01) {
+    notice.style.background = "#ecfdf5";
+    notice.innerHTML = `<span style="color:#059669;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="check-circle" style="width:14px;height:14px;"></i> Split matches total (LKR ${total.toLocaleString('en-US', { minimumFractionDigits: 2 })})</span>`;
+  } else if (diff > 0) {
+    notice.style.background = "#fff1f2";
+    notice.innerHTML = `<span style="color:#e11d48;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="alert-circle" style="width:14px;height:14px;"></i> Underallocated by: LKR ${diff.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>`;
+  } else {
+    notice.style.background = "#fffbeb";
+    notice.innerHTML = `<span style="color:#d97706;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="info" style="width:14px;height:14px;"></i> Overallocated by: LKR ${(-diff).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>`;
+  }
+
+  if (window.lucide) lucide.createIcons();
 }
+
+// Global Enter key listener for payment modal checkout
+document.addEventListener("keydown", function(e) {
+  const payModal = document.getElementById("payment-modal");
+  if (payModal && payModal.classList.contains("active") && e.key === "Enter") {
+    // If not in bill-notes text field
+    if (document.activeElement && document.activeElement.id === "bill-notes") return;
+    e.preventDefault();
+    processSaleCheckout();
+  }
+});
 
 async function processSaleCheckout() {
   const btn = document.getElementById("btn-process-sale");
   btn.disabled = true;
-  btn.innerText = "Processing Transaction...";
+  btn.innerHTML = `<i data-lucide="loader-2" class="spin" style="width:18px;height:18px;"></i> Processing Transaction...`;
+  if (window.lucide) lucide.createIcons();
 
   try {
     let paidAmount = currentCart.grand_total;
@@ -542,7 +659,7 @@ async function processSaleCheckout() {
     lastCompletedSale = res.data;
 
     closePaymentModal();
-    common.showToast(`Invoice ${res.data.invoice_number} created successfully!`, "success");
+    common.showToast(`Invoice ${res.data.invoice_number} completed successfully!`, "success");
 
     // Reset Cart
     currentCart.items = [];
@@ -558,7 +675,11 @@ async function processSaleCheckout() {
     common.showToast(err.message || "Checkout failed.", "error");
   } finally {
     btn.disabled = false;
-    btn.innerHTML = `<i data-lucide="check"></i> Confirm Payment & Complete Sale`;
+    btn.innerHTML = `
+      <i data-lucide="sparkles" style="width:18px;height:18px;"></i>
+      <span>Confirm & Complete Sale</span>
+      <span class="kbd-enter-hint">↵ Enter</span>
+    `;
     if (window.lucide) lucide.createIcons();
   }
 }
@@ -580,29 +701,11 @@ function switchReceiptTab(format) {
   const btnA4 = document.getElementById("tab-btn-a4");
 
   if (format === 'thermal') {
-    btnThermal.style.background = "#fff";
-    btnThermal.style.fontWeight = "700";
-    btnThermal.style.color = "var(--primary)";
-    btnThermal.style.opacity = "1";
-    btnThermal.style.borderBottomColor = "transparent";
-
-    btnA4.style.background = "transparent";
-    btnA4.style.fontWeight = "500";
-    btnA4.style.color = "var(--text-dark)";
-    btnA4.style.opacity = "0.75";
-    btnA4.style.borderBottomColor = "#fce7ec";
+    btnThermal.classList.add("active");
+    btnA4.classList.remove("active");
   } else {
-    btnA4.style.background = "#fff";
-    btnA4.style.fontWeight = "700";
-    btnA4.style.color = "var(--primary)";
-    btnA4.style.opacity = "1";
-    btnA4.style.borderBottomColor = "transparent";
-
-    btnThermal.style.background = "transparent";
-    btnThermal.style.fontWeight = "500";
-    btnThermal.style.color = "var(--text-dark)";
-    btnThermal.style.opacity = "0.75";
-    btnThermal.style.borderBottomColor = "#fce7ec";
+    btnA4.classList.add("active");
+    btnThermal.classList.remove("active");
   }
 
   renderReceiptPreview();
@@ -616,21 +719,21 @@ function renderReceiptPreview() {
   if (currentReceiptFormat === 'thermal') {
     container.innerHTML = PrintEngine.generateThermalReceipt(lastCompletedSale);
     actionsContainer.innerHTML = `
-      <button class="btn-secondary-custom" onclick="handleDownloadReceiptPdf()" style="font-size:0.85rem;">
-        <i data-lucide="download"></i> Download Receipt (PDF)
+      <button class="btn-secondary-custom" onclick="handleDownloadReceiptPdf()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px;">
+        <i data-lucide="download" style="width:16px; height:16px;"></i> Download Receipt (PDF)
       </button>
-      <button class="btn-primary-custom" onclick="handlePrintReceipt()" style="font-size:0.85rem;">
-        <i data-lucide="printer"></i> Print 80mm Receipt
+      <button class="btn-primary-custom" onclick="handlePrintReceipt()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(201,93,126,0.35);">
+        <i data-lucide="printer" style="width:16px; height:16px;"></i> Print 80mm Receipt
       </button>
     `;
   } else {
     container.innerHTML = PrintEngine.generateA4Invoice(lastCompletedSale);
     actionsContainer.innerHTML = `
-      <button class="btn-secondary-custom" onclick="handleDownloadA4Pdf()" style="font-size:0.85rem;">
-        <i data-lucide="download"></i> Download Invoice (PDF)
+      <button class="btn-secondary-custom" onclick="handleDownloadA4Pdf()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px;">
+        <i data-lucide="download" style="width:16px; height:16px;"></i> Download Half A4 (PDF)
       </button>
-      <button class="btn-primary-custom" onclick="handlePrintA4()" style="font-size:0.85rem;">
-        <i data-lucide="printer"></i> Print A4 Invoice
+      <button class="btn-primary-custom" onclick="handlePrintA4()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(201,93,126,0.35);">
+        <i data-lucide="printer" style="width:16px; height:16px;"></i> Print Half A4 Invoice
       </button>
     `;
   }
@@ -640,26 +743,30 @@ function renderReceiptPreview() {
 
 function handlePrintReceipt() {
   if (!lastCompletedSale) return;
-  const html = PrintEngine.generateThermalReceipt(lastCompletedSale);
-  PrintEngine.printThermal(html);
+  const container = document.getElementById("receipt-print-area");
+  const target = (container && container.firstElementChild) ? container.firstElementChild : PrintEngine.generateThermalReceipt(lastCompletedSale);
+  PrintEngine.printThermal(target);
 }
 
 function handleDownloadReceiptPdf() {
   if (!lastCompletedSale) return;
-  const html = PrintEngine.generateThermalReceipt(lastCompletedSale);
-  PrintEngine.downloadAsPdf(html, `Salon_Vellora_Receipt_${lastCompletedSale.invoice_number}.pdf`, true);
+  const container = document.getElementById("receipt-print-area");
+  const target = (container && container.firstElementChild) ? container.firstElementChild : PrintEngine.generateThermalReceipt(lastCompletedSale);
+  PrintEngine.downloadAsPdf(target, `Salon_Vellora_Receipt_${lastCompletedSale.invoice_number}.pdf`, true);
 }
 
 function handlePrintA4() {
   if (!lastCompletedSale) return;
-  const html = PrintEngine.generateA4Invoice(lastCompletedSale);
-  PrintEngine.printA4(html);
+  const container = document.getElementById("receipt-print-area");
+  const target = (container && container.firstElementChild) ? container.firstElementChild : PrintEngine.generateA4Invoice(lastCompletedSale);
+  PrintEngine.printA4(target);
 }
 
 function handleDownloadA4Pdf() {
   if (!lastCompletedSale) return;
-  const html = PrintEngine.generateA4Invoice(lastCompletedSale);
-  PrintEngine.downloadAsPdf(html, `Salon_Vellora_Invoice_${lastCompletedSale.invoice_number}.pdf`, false);
+  const container = document.getElementById("receipt-print-area");
+  const target = (container && container.firstElementChild) ? container.firstElementChild : PrintEngine.generateA4Invoice(lastCompletedSale);
+  PrintEngine.downloadAsPdf(target, `Salon_Vellora_Invoice_${lastCompletedSale.invoice_number}.pdf`, false);
 }
 
 function closeReceiptModal() {

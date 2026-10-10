@@ -151,6 +151,9 @@ const common = {
             <a href="staff.html" class="nav-link-custom ${activeMenuKey === 'staff' ? 'active' : ''}" data-nav-permission="staff.view">
               <i data-lucide="user-check"></i> Staff & Stylists
             </a>
+            <a href="salaries.html" class="nav-link-custom ${activeMenuKey === 'salaries' ? 'active' : ''}" data-nav-permission="staff.view">
+              <i data-lucide="banknote"></i> Staff Salaries & Payroll
+            </a>
 
             <div class="nav-section-title">Inventory & Stock</div>
             <a href="inventory.html" class="nav-link-custom ${activeMenuKey === 'inventory' ? 'active' : ''}" data-nav-permission="inventory.view">

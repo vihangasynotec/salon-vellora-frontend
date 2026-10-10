@@ -1,6 +1,6 @@
 /**
- * Salon Vellora — Public Luxury Catalog & Bridal Menu Engine
- * Displays live categories, treatments, bridal packages, pricing & WhatsApp booking
+ * Salon Vellora — Luxury Editorial Catalog & Interactive Details Modal Engine
+ * Handles live categories, package and service cards with luxury images, and interactive details popup
  */
 
 let allCategories = [];
@@ -8,9 +8,40 @@ let allPackages = [];
 let allServices = [];
 let activeFilter = 'all';
 let searchQuery = '';
-let currentInquiryItem = null;
+let currentModalItem = null;
 
-// Category icons mapping
+// Curated Editorial Image Mapping for Salon Vellora Services & Bridal Packages
+const ITEM_IMAGE_MAP = {
+  // Bridal Packages
+  'pkg_1': 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&q=80&auto=format&fit=crop', // Royal Kandyan Bride
+  'pkg_2': 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80&auto=format&fit=crop', // Western Bridal Glow
+
+  // Specific Service Codes
+  'SV-BR-01': 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&q=80&auto=format&fit=crop', // Kandyan Bridal Dressing
+  'SV-BR-02': 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80&auto=format&fit=crop', // Western Bridal
+  'SV-BR-03': 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&q=80&auto=format&fit=crop', // Bridal Retouch
+  'SV-HC-01': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&q=80&auto=format&fit=crop', // Haircut & Luxury Blow Dry
+  'SV-HC-02': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&q=80&auto=format&fit=crop', // Hair Color
+  'SV-HC-03': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&q=80&auto=format&fit=crop', // Balayage & Highlights
+  'SV-HT-01': 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=800&q=80&auto=format&fit=crop', // Brazilian Keratin
+  'SV-HT-02': 'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=800&q=80&auto=format&fit=crop', // Permanent Smoothening
+  'SV-FC-01': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=800&q=80&auto=format&fit=crop', // 24K Gold Facial
+  'SV-FC-02': 'https://images.unsplash.com/photo-1512290900672-1f02e086780c?w=800&q=80&auto=format&fit=crop', // Hydra Radiance Facial
+  'SV-NL-01': 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=800&q=80&auto=format&fit=crop', // Gel Nail Art
+  'SV-NL-02': 'https://images.unsplash.com/photo-1519415510236-718bdfcd89c8?w=800&q=80&auto=format&fit=crop', // Manicure & Pedicure Spa
+};
+
+// Fallback Images by Category
+const CATEGORY_FALLBACK_IMAGES = {
+  'bridal-dressing': 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&q=80&auto=format&fit=crop',
+  'hair-care': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&q=80&auto=format&fit=crop',
+  'hair-treatments': 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=800&q=80&auto=format&fit=crop',
+  'facial-skincare': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=800&q=80&auto=format&fit=crop',
+  'nails-spa': 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=800&q=80&auto=format&fit=crop',
+  'makeup-beauty': 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=800&q=80&auto=format&fit=crop',
+};
+
+// Category Icon Mapping
 const CATEGORY_ICONS = {
   'all': 'sparkles',
   'packages': 'crown',
@@ -27,16 +58,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     lucide.createIcons();
   }
 
-  // Close modal on escape or background click
-  const modal = document.getElementById('inquiry-modal');
-  if (modal) {
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeInquiryModal();
+  // Modal event listeners
+  const modalOverlay = document.getElementById('detail-modal');
+  if (modalOverlay) {
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeDetailModal();
     });
   }
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeInquiryModal();
+    if (e.key === 'Escape') closeDetailModal();
   });
+
+  // Set default date picker value to tomorrow
+  const dateInput = document.getElementById('detail-client-date');
+  if (dateInput) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    dateInput.value = tomorrow.toISOString().split('T')[0];
+    dateInput.min = new Date().toISOString().split('T')[0];
+  }
 });
 
 /**
@@ -130,7 +170,7 @@ function renderCategoryPills() {
   allCategories.forEach(cat => {
     const slug = cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const isActive = activeFilter === slug;
-    const iconName = CATEGORY_ICONS[slug] || 'flower-2';
+    const iconName = CATEGORY_ICONS[slug] || 'sparkle';
 
     html += `
       <button class="category-pill ${isActive ? 'active' : ''}" onclick="filterCatalog('${slug}', this)">
@@ -149,7 +189,6 @@ function renderCategoryPills() {
 function filterCatalog(filterKey, btnEl) {
   activeFilter = filterKey;
 
-  // Update button active states
   const pills = document.querySelectorAll('.category-pill');
   pills.forEach(p => p.classList.remove('active'));
   if (btnEl) {
@@ -158,7 +197,6 @@ function filterCatalog(filterKey, btnEl) {
 
   renderCatalog();
 
-  // Smooth scroll to relevant section if clicking specific category
   if (filterKey === 'packages') {
     const pkgSec = document.getElementById('packages-section');
     if (pkgSec) pkgSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -246,7 +284,7 @@ function renderCatalog() {
               <p style="margin:0;">No bridal packages found matching your criteria.</p>
             </div>`;
         } else {
-          pkgGrid.innerHTML = filteredPackages.map(pkg => renderPackageCard(pkg)).join('');
+          pkgGrid.innerHTML = filteredPackages.map(pkg => renderPackageCardWithImage(pkg)).join('');
         }
       }
     }
@@ -270,11 +308,10 @@ function renderCatalog() {
             <p style="font-size:0.85rem; margin:0;">We couldn't find any treatments matching "${escapeHtml(query)}". Try another search or filter.</p>
           </div>`;
       } else {
-        // If filter is 'all' and no query, group by category for luxury presentation
         if (activeFilter === 'all' && !query) {
-          srvGrid.innerHTML = renderGroupedServices(filteredServices);
+          srvGrid.innerHTML = renderGroupedServicesWithImage(filteredServices);
         } else {
-          srvGrid.innerHTML = filteredServices.map(srv => renderTreatmentCard(srv)).join('');
+          srvGrid.innerHTML = filteredServices.map(srv => renderTreatmentCardWithImage(srv)).join('');
         }
       }
     }
@@ -286,129 +323,157 @@ function renderCatalog() {
 }
 
 /**
- * Render single Luxury Bridal Package Card
+ * Get curated image URL for a package or service
  */
-function renderPackageCard(pkg) {
+function getItemImage(item, type) {
+  if (item.image && typeof item.image === 'string' && item.image.trim() !== '') {
+    return item.image;
+  }
+  if (type === 'package') {
+    const key = `pkg_${item.id}`;
+    if (ITEM_IMAGE_MAP[key]) return ITEM_IMAGE_MAP[key];
+    return 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&q=80&auto=format&fit=crop';
+  }
+  if (item.code && ITEM_IMAGE_MAP[item.code]) {
+    return ITEM_IMAGE_MAP[item.code];
+  }
+  if (item.category_slug && CATEGORY_FALLBACK_IMAGES[item.category_slug]) {
+    return CATEGORY_FALLBACK_IMAGES[item.category_slug];
+  }
+  return '../assets/women.png';
+}
+
+/**
+ * Format duration text
+ */
+function formatDuration(minutes) {
+  const m = parseInt(minutes) || 45;
+  const hours = Math.floor(m / 60);
+  const rem = m % 60;
+  if (hours > 0) {
+    return rem > 0 ? `${hours}h ${rem}m` : `${hours} Hours`;
+  }
+  return `${m} mins`;
+}
+
+/**
+ * Render Next-Level Luxury Bridal Package Card
+ */
+function renderPackageCardWithImage(pkg) {
   const original = parseFloat(pkg.original_total) || 0;
   const price = parseFloat(pkg.package_price || pkg.price) || 0;
   const discountVal = original > price ? original - price : 0;
-  const duration = pkg.duration_minutes || 300;
-  const hours = Math.floor(duration / 60);
-  const mins = duration % 60;
-  const durationText = hours > 0 ? `${hours}h ${mins > 0 ? mins + 'm' : ''} Comprehensive` : `${duration} mins`;
+  const imgUrl = getItemImage(pkg, 'package');
+  const durationText = formatDuration(pkg.duration_minutes || 360);
 
-  // WhatsApp prefilled message
-  const waMsg = encodeURIComponent(`Hello Salon Vellora, I would like to inquire about booking the "${pkg.name}" (LKR ${price.toLocaleString('en-US')}). Please let me know available dates!`);
-  const waUrl = `https://wa.me/94740844739?text=${waMsg}`;
-
-  // Inclusions HTML
-  const servicesList = (pkg.services || []).map(s => `
-    <li class="inclusion-item">
-      <span class="check-icon-circle">
-        <i data-lucide="check" style="width:12px;height:12px;"></i>
-      </span>
-      <div>
-        <strong style="color:#1f2937;">${escapeHtml(s.name)}</strong>
-        ${s.description ? `<div style="font-size:0.76rem; color:#6b7280;">${escapeHtml(s.description)}</div>` : ''}
-      </div>
-    </li>
+  // Inclusions preview pills (first 3)
+  const services = pkg.services || [];
+  const previewPills = services.slice(0, 3).map(s => `
+    <span class="preview-service-tag">
+      <i data-lucide="check" style="width:10px;height:10px;color:var(--primary);vertical-align:middle;"></i> ${escapeHtml(s.name)}
+    </span>
   `).join('');
+  const extraCount = services.length > 3 ? `<span class="preview-service-tag">+${services.length - 3} more</span>` : '';
 
   return `
-    <div class="package-card">
-      <div class="package-top-banner">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-          <span class="package-badge">
-            <i data-lucide="sparkles" style="width:12px;height:12px;"></i> Signature Bridal
+    <div class="luxury-catalog-card" onclick="openCardDetailModal('package', ${pkg.id})">
+      <!-- Media Header with Floating Badges -->
+      <div class="card-media-wrap package-card-media">
+        <img src="${imgUrl}" alt="${escapeHtml(pkg.name)}" class="card-img" onerror="this.src='../assets/women.png'" loading="lazy">
+        <div class="card-media-scrim"></div>
+        <div class="card-floating-tags">
+          <span class="tag-package-pill">
+            <i data-lucide="crown" style="width:12px;height:12px;"></i> Signature Bridal
           </span>
-          <span class="duration-chip">
-            <i data-lucide="clock" style="width:12px;height:12px;color:var(--primary);"></i> ${durationText}
+          <span class="tag-duration-chip">
+            <i data-lucide="clock" style="width:11px;height:11px;"></i> ${durationText}
           </span>
         </div>
-        <h3 class="package-name">${escapeHtml(pkg.name)}</h3>
-        <p class="package-desc">${escapeHtml(pkg.description || 'Exclusive bridal makeover and complete beauty package tailored for your wedding day.')}</p>
+        <span class="card-code-float">SV-PKG-${pkg.id}</span>
+        <span class="card-tap-hint">Tap for details <i data-lucide="chevron-right" style="width:13px;height:13px;"></i></span>
       </div>
 
-      <div class="package-body">
-        <div class="inclusions-title">
-          <i data-lucide="award" style="width:13px;height:13px;"></i> Curated Package Inclusions:
+      <!-- Card Body -->
+      <div class="card-body-content">
+        <h3 class="card-item-title package-card-title">${escapeHtml(pkg.name)}</h3>
+        <p class="card-item-desc">${escapeHtml(pkg.description || 'Exclusive bridal makeover, jewelry setting & pre-bridal care curated for your special day.')}</p>
+        
+        <div class="package-inclusions-preview">
+          <div class="preview-header">
+            <i data-lucide="award" style="width:12px;height:12px;"></i> Curated Inclusions:
+          </div>
+          <div class="preview-pills-row">
+            ${previewPills} ${extraCount}
+          </div>
         </div>
-        <ul class="inclusions-list">
-          ${servicesList || '<li style="font-size:0.82rem; color:var(--text-muted);">Customized bridal services combination.</li>'}
-        </ul>
       </div>
 
-      <div class="package-footer">
-        <div class="price-strip">
-          <div>
-            ${original > price ? `
-              <div class="original-price-wrap">
-                Total Value: <span class="strike-price">${formatCatalogCurrency(original)}</span>
-              </div>
-              <div class="savings-pill">
-                Save ${formatCatalogCurrency(discountVal)}
-              </div>
-            ` : `
-              <div class="original-price-wrap" style="color:var(--text-muted);">Package Investment</div>
-            `}
+      <!-- Price & Action Strip -->
+      <div class="card-bottom-strip">
+        <div class="price-box-wrap">
+          <div class="price-sub-label">
+            Package Investment ${original > price ? `<span class="original-strike">${formatCatalogCurrency(original)}</span>` : ''}
           </div>
-          <div style="text-align:right;">
-            <div style="font-size:0.7rem; text-transform:uppercase; color:var(--text-muted); font-weight:600;">Special Price</div>
-            <div class="final-package-price">${formatCatalogCurrency(price)}</div>
-          </div>
+          <div class="final-bold-price">${formatCatalogCurrency(price)}</div>
+          ${discountVal > 0 ? `<div class="savings-chip-green">Save ${formatCatalogCurrency(discountVal)}</div>` : ''}
         </div>
 
-        <div class="package-actions">
-          <a href="${waUrl}" target="_blank" class="btn-whatsapp">
-            <i data-lucide="message-circle" style="width:15px;height:15px;"></i> WhatsApp
-          </a>
-          <button type="button" class="btn-details" onclick="openInquiryModal('package', ${pkg.id})">
-            <i data-lucide="calendar" style="width:15px;height:15px;color:var(--primary);"></i> Inquire / Book
-          </button>
-        </div>
+        <button type="button" class="btn-view-card-detail" onclick="event.stopPropagation(); openCardDetailModal('package', ${pkg.id})">
+          <span>Details</span>
+          <i data-lucide="arrow-right" style="width:14px;height:14px;"></i>
+        </button>
       </div>
     </div>
   `;
 }
 
 /**
- * Render single Treatment Card
+ * Render Next-Level Luxury Salon Treatment Card
  */
-function renderTreatmentCard(srv) {
+function renderTreatmentCardWithImage(srv) {
   const regularPrice = parseFloat(srv.price) || 0;
   const discountAmount = parseFloat(srv.discount) || 0;
   const finalPrice = discountAmount > 0 ? Math.max(0, regularPrice - discountAmount) : regularPrice;
-  const duration = srv.duration_minutes || 45;
+  const imgUrl = getItemImage(srv, 'service');
+  const durationText = formatDuration(srv.duration_minutes || 45);
 
   return `
-    <div class="treatment-card">
-      <div>
-        <div class="treatment-meta">
-          <span class="treatment-code">${escapeHtml(srv.code || 'SV-SRV')}</span>
-          <span class="treatment-duration">
-            <i data-lucide="clock" style="width:12px;height:12px;"></i> ${duration} mins
+    <div class="luxury-catalog-card" onclick="openCardDetailModal('service', ${srv.id})">
+      <!-- Media Header with Floating Badges -->
+      <div class="card-media-wrap">
+        <img src="${imgUrl}" alt="${escapeHtml(srv.name)}" class="card-img" onerror="this.src='../assets/women.png'" loading="lazy">
+        <div class="card-media-scrim"></div>
+        <div class="card-floating-tags">
+          <span class="tag-category-pill">
+            <i data-lucide="sparkle" style="width:11px;height:11px;color:var(--primary);"></i> ${escapeHtml(srv.category_name || 'Treatment')}
+          </span>
+          <span class="tag-duration-chip">
+            <i data-lucide="clock" style="width:11px;height:11px;"></i> ${durationText}
           </span>
         </div>
-
-        <h4 class="treatment-name">${escapeHtml(srv.name)}</h4>
-        <div class="treatment-category-badge">${escapeHtml(srv.category_name || 'Salon Treatment')}</div>
-        <p class="treatment-desc">${escapeHtml(srv.description || 'Authentic salon treatment using certified luxury products and professional styling techniques.')}</p>
+        <span class="card-code-float">${escapeHtml(srv.code || 'SV-SRV')}</span>
+        <span class="card-tap-hint">Tap for details <i data-lucide="chevron-right" style="width:13px;height:13px;"></i></span>
       </div>
 
-      <div class="treatment-footer">
-        <div>
-          <div class="treatment-price-label">Price</div>
-          <div style="display:flex; align-items:baseline; gap:4px;">
-            <span class="treatment-price">${formatCatalogCurrency(finalPrice)}</span>
-            ${discountAmount > 0 ? `
-              <span style="font-size:0.75rem; text-decoration:line-through; color:#9ca3af;">${formatCatalogCurrency(regularPrice)}</span>
-              <span class="treatment-discount-pill">Save LKR ${discountAmount.toLocaleString()}</span>
-            ` : ''}
+      <!-- Card Body -->
+      <div class="card-body-content">
+        <h3 class="card-item-title">${escapeHtml(srv.name)}</h3>
+        <p class="card-item-desc">${escapeHtml(srv.description || 'Authentic salon treatment using certified luxury products and professional styling techniques.')}</p>
+      </div>
+
+      <!-- Price & Action Strip -->
+      <div class="card-bottom-strip">
+        <div class="price-box-wrap">
+          <div class="price-sub-label">
+            Service Price ${discountAmount > 0 ? `<span class="original-strike">${formatCatalogCurrency(regularPrice)}</span>` : ''}
           </div>
+          <div class="final-bold-price">${formatCatalogCurrency(finalPrice)}</div>
+          ${discountAmount > 0 ? `<div class="savings-chip-green">Save LKR ${discountAmount.toLocaleString()}</div>` : ''}
         </div>
 
-        <button type="button" class="btn-book-treatment" onclick="openInquiryModal('service', ${srv.id})">
-          <i data-lucide="calendar-plus" style="width:13px;height:13px;"></i> Book
+        <button type="button" class="btn-view-card-detail" onclick="event.stopPropagation(); openCardDetailModal('service', ${srv.id})">
+          <span>Details</span>
+          <i data-lucide="arrow-right" style="width:14px;height:14px;"></i>
         </button>
       </div>
     </div>
@@ -418,8 +483,7 @@ function renderTreatmentCard(srv) {
 /**
  * Group services by category for structured luxury presentation
  */
-function renderGroupedServices(services) {
-  // Group by category_name
+function renderGroupedServicesWithImage(services) {
   const groups = {};
   services.forEach(srv => {
     const cat = srv.category_name || 'Other Treatments';
@@ -435,10 +499,10 @@ function renderGroupedServices(services) {
 
     html += `
       <div style="grid-column: 1/-1;" class="cat-group-header">
-        <div class="cat-group-title">
-          <i data-lucide="${iconName}" style="width:18px;height:18px;color:var(--primary);"></i>
+        <h3 class="cat-group-title">
+          <i data-lucide="${iconName}" style="width:20px;height:20px;color:var(--primary);"></i>
           ${escapeHtml(catName)}
-        </div>
+        </h3>
         <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600; background:#f9fafb; padding:0.25rem 0.65rem; border-radius:var(--radius-pill); border:1px solid var(--border);">
           ${list.length} Service${list.length === 1 ? '' : 's'}
         </span>
@@ -446,7 +510,7 @@ function renderGroupedServices(services) {
     `;
 
     list.forEach(srv => {
-      html += renderTreatmentCard(srv);
+      html += renderTreatmentCardWithImage(srv);
     });
   });
 
@@ -454,10 +518,13 @@ function renderGroupedServices(services) {
 }
 
 /**
- * Open Quick Booking / Inquiry Modal
+ * ==========================================================================
+ * OPEN NEXT-LEVEL CARD DETAILS POPUP (MODAL)
+ * Shows full image, description, inclusions, pricing & direct WhatsApp booking
+ * ==========================================================================
  */
-function openInquiryModal(type, id) {
-  const modal = document.getElementById('inquiry-modal');
+function openCardDetailModal(type, id) {
+  const modal = document.getElementById('detail-modal');
   if (!modal) return;
 
   let item = null;
@@ -465,7 +532,15 @@ function openInquiryModal(type, id) {
     item = allPackages.find(p => p.id === id);
     if (item) {
       item._isPackage = true;
-      item._displayPrice = parseFloat(item.package_price || item.price) || 0;
+      const orig = parseFloat(item.original_total) || 0;
+      const pkgPrice = parseFloat(item.package_price || item.price) || 0;
+      item._displayPrice = pkgPrice;
+      item._originalPrice = orig;
+      item._discount = orig > pkgPrice ? orig - pkgPrice : 0;
+      item._durationText = formatDuration(item.duration_minutes || 360);
+      item._code = `SV-PKG-0${item.id}`;
+      item._categoryName = 'Signature Bridal Atelier';
+      item._imageUrl = getItemImage(item, 'package');
     }
   } else {
     item = allServices.find(s => s.id === id);
@@ -474,68 +549,121 @@ function openInquiryModal(type, id) {
       const regular = parseFloat(item.price) || 0;
       const disc = parseFloat(item.discount) || 0;
       item._displayPrice = disc > 0 ? (regular - disc) : regular;
+      item._originalPrice = disc > 0 ? regular : 0;
+      item._discount = disc;
+      item._durationText = formatDuration(item.duration_minutes || 45);
+      item._code = item.code || 'SV-SRV';
+      item._categoryName = item.category_name || 'Salon Treatment';
+      item._imageUrl = getItemImage(item, 'service');
     }
   }
 
   if (!item) return;
-  currentInquiryItem = item;
+  currentModalItem = item;
 
-  // Populate modal
-  document.getElementById('modal-item-name').textContent = item.name;
-  document.getElementById('modal-item-badge').textContent = item._isPackage ? 'Bridal Package' : (item.category_name || 'Salon Treatment');
-  document.getElementById('modal-item-meta').textContent = `Duration: ${item.duration_minutes || 45} mins`;
-  document.getElementById('modal-item-price').textContent = formatCatalogCurrency(item._displayPrice);
-  document.getElementById('modal-item-desc').textContent = item.description || 'Exclusive luxury beauty treatment at Salon Vellora.';
+  // Populate Hero Image & Captions
+  const coverImg = document.getElementById('modal-cover-img');
+  if (coverImg) coverImg.src = item._imageUrl;
 
-  const inclBox = document.getElementById('modal-item-inclusions');
-  if (item._isPackage && item.services && item.services.length) {
-    inclBox.style.display = 'block';
-    inclBox.innerHTML = `
-      <div style="font-size:0.75rem; font-weight:700; color:var(--primary-dark); margin-bottom:4px;">Includes:</div>
-      <div style="font-size:0.78rem; color:#4b5563;">
-        ${item.services.map(s => `• ${escapeHtml(s.name)}`).join('<br>')}
-      </div>
-    `;
+  document.getElementById('modal-title').textContent = item.name;
+  document.getElementById('modal-cat-tag').textContent = item._categoryName;
+  document.getElementById('modal-code-tag').textContent = item._code;
+  document.getElementById('modal-duration-tag').innerHTML = `<i data-lucide="clock" style="width:12px;height:12px;"></i> ${item._durationText}`;
+
+  // Populate Specs Strip
+  document.getElementById('modal-price-val').textContent = formatCatalogCurrency(item._displayPrice);
+  document.getElementById('modal-duration-val').textContent = item._durationText;
+
+  const savingsPill = document.getElementById('modal-savings-pill');
+  if (item._discount > 0) {
+    savingsPill.style.display = 'inline-block';
+    savingsPill.textContent = `Save ${formatCatalogCurrency(item._discount)}`;
   } else {
-    inclBox.style.display = 'none';
-    inclBox.innerHTML = '';
+    savingsPill.style.display = 'none';
   }
 
+  // Populate Detailed Description
+  document.getElementById('modal-long-desc').textContent = item.description || 'Exclusive luxury beauty treatment at Salon Vellora. Executed with premium authentic cosmetics, certified senior stylists, and high standards of cleanliness.';
+
+  // Inclusions Section (For Packages) vs Highlights (For Services)
+  const inclusionsSec = document.getElementById('modal-inclusions-section');
+  const inclusionsList = document.getElementById('modal-inclusions-list');
+  const countSpan = document.getElementById('modal-inclusions-count');
+  const highlightsSec = document.getElementById('modal-highlights-section');
+
+  if (item._isPackage && item.services && item.services.length) {
+    inclusionsSec.style.display = 'block';
+    highlightsSec.style.display = 'none';
+    countSpan.textContent = item.services.length;
+
+    inclusionsList.innerHTML = item.services.map(s => `
+      <li class="modal-inclusion-item">
+        <div class="inclusion-check-round">
+          <i data-lucide="check" style="width:14px;height:14px;"></i>
+        </div>
+        <div style="flex:1;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline;">
+            <strong style="color:#111827; font-size:0.92rem;">${escapeHtml(s.name)}</strong>
+            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">
+              ${s.duration_minutes ? s.duration_minutes + ' mins' : ''}
+            </span>
+          </div>
+          ${s.description ? `<p style="margin:4px 0 0; font-size:0.8rem; color:#6b7280; line-height:1.4;">${escapeHtml(s.description)}</p>` : ''}
+        </div>
+      </li>
+    `).join('');
+  } else {
+    inclusionsSec.style.display = 'none';
+    highlightsSec.style.display = 'block';
+  }
+
+  // Open Modal
   modal.classList.add('active');
-  if (window.lucide) lucide.createIcons();
+  document.body.style.overflow = 'hidden';
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
 }
 
-function closeInquiryModal() {
-  const modal = document.getElementById('inquiry-modal');
+function closeDetailModal() {
+  const modal = document.getElementById('detail-modal');
   if (modal) modal.classList.remove('active');
-  currentInquiryItem = null;
+  document.body.style.overflow = '';
+  currentModalItem = null;
 }
 
 /**
- * Submit Inquiry to WhatsApp
+ * Submit Booking from Detail Modal to WhatsApp
  */
-function submitInquiryWhatsApp() {
-  if (!currentInquiryItem) return;
+function submitDetailWhatsApp() {
+  if (!currentModalItem) return;
 
-  const nameInput = document.getElementById('inquiry-client-name');
-  const dateInput = document.getElementById('inquiry-client-date');
+  const nameInput = document.getElementById('detail-client-name');
+  const dateInput = document.getElementById('detail-client-date');
+  const timeInput = document.getElementById('detail-client-time');
+
   const clientName = nameInput ? nameInput.value.trim() : '';
   const prefDate = dateInput ? dateInput.value : '';
+  const prefTime = timeInput ? timeInput.value : '';
 
   let message = `Hello Salon Vellora,`;
   if (clientName) {
     message += ` my name is ${clientName}.`;
   }
-  message += ` I would like to inquire about booking: "${currentInquiryItem.name}" (${formatCatalogCurrency(currentInquiryItem._displayPrice)}).`;
+  message += ` I would like to book the "${currentModalItem.name}" (${formatCatalogCurrency(currentModalItem._displayPrice)}).`;
 
   if (prefDate) {
-    message += ` Preferred Date: ${prefDate}.`;
+    message += `\n📅 Preferred Date: ${prefDate}`;
   }
-  message += ` Could you please confirm available time slots? Thank you!`;
+  if (prefTime) {
+    message += `\n⏰ Time Slot: ${prefTime}`;
+  }
+  message += `\n\nCould you please confirm appointment availability? Thank you!`;
 
   const url = `https://wa.me/94740844739?text=${encodeURIComponent(message)}`;
   window.open(url, '_blank');
-  closeInquiryModal();
+  closeDetailModal();
 }
 
 /**

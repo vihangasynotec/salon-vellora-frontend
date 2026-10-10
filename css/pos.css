@@ -396,3 +396,330 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(201, 93, 126, 0.45);
 }
+
+/* ==========================================================================
+   NEXT-LEVEL LUXURY PAYMENT & CHECKOUT MODAL STYLES
+   ========================================================================== */
+.luxury-payment-modal {
+  animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.luxury-pay-header {
+  background: linear-gradient(135deg, #1e1b24 0%, #2f1d28 45%, #C95D7E 100%);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pay-icon-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.luxury-due-card {
+  background: linear-gradient(135deg, #111827 0%, #1e1e2d 65%, #381525 100%);
+  border-radius: 14px;
+  padding: 1.15rem 1.25rem;
+  margin-bottom: 1.15rem;
+  border: 1px solid rgba(201, 93, 126, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.due-amount-hero {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  line-height: 1.15;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  text-shadow: 0 2px 12px rgba(201, 93, 126, 0.35);
+}
+
+.pay-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 1.15rem;
+}
+
+.pay-method-card {
+  background: #ffffff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.75rem 0.4rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.pay-method-card:hover {
+  border-color: #f472b6;
+  background: #fff5f8;
+  transform: translateY(-2px);
+}
+
+.pay-method-card.active-method {
+  border-color: #C95D7E;
+  background: linear-gradient(135deg, #fff0f5 0%, #ffe4ec 100%);
+  box-shadow: 0 6px 16px rgba(201, 93, 126, 0.22);
+  transform: translateY(-2px);
+}
+
+.pay-method-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4b5563;
+  transition: all 0.2s;
+}
+
+.pay-method-card:hover .pay-method-icon {
+  color: #C95D7E;
+  background: #fce7ec;
+}
+
+.pay-method-card.active-method .pay-method-icon {
+  background: #C95D7E;
+  color: #ffffff;
+  box-shadow: 0 3px 8px rgba(201, 93, 126, 0.35);
+}
+
+.pay-method-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #374151;
+  letter-spacing: 0.2px;
+}
+
+.pay-method-card.active-method .pay-method-name {
+  color: #9d174d;
+}
+
+.pay-check-indicator {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #C95D7E;
+  color: #ffffff;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+}
+
+.pay-method-card.active-method .pay-check-indicator {
+  display: flex;
+}
+
+.tendered-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.tendered-input-wrapper:focus-within {
+  border-color: #C95D7E;
+  box-shadow: 0 0 0 4px rgba(201, 93, 126, 0.15);
+}
+
+.currency-prefix-tag {
+  padding: 0.75rem 1rem;
+  background: #fdf2f5;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #C95D7E;
+  border-right: 1.5px solid #fce7ec;
+  letter-spacing: 0.5px;
+}
+
+.tendered-input-field {
+  border: none;
+  outline: none;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #111827;
+  padding: 0.65rem 1rem;
+  width: 100%;
+  background: transparent;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.quick-cash-container {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.quick-cash-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.quick-cash-chip {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.quick-cash-chip:hover {
+  background: #fdf2f5;
+  border-color: #C95D7E;
+  color: #C95D7E;
+  transform: translateY(-1px);
+}
+
+.quick-cash-chip.exact-chip {
+  background: #fff0f5;
+  border-color: #fbcfe8;
+  color: #9d174d;
+}
+
+.quick-cash-chip.exact-chip:hover {
+  background: #fce7ec;
+  border-color: #C95D7E;
+}
+
+.change-banner-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding: 0.85rem 1.15rem;
+  background: #ecfdf5;
+  border: 1.5px solid #a7f3d0;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.btn-luxury-confirm {
+  background: linear-gradient(135deg, #C95D7E 0%, #9f395b 100%);
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 1.4rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 6px 18px rgba(201, 93, 126, 0.38);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-luxury-confirm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(201, 93, 126, 0.5);
+  background: linear-gradient(135deg, #b84a6d 0%, #8b2c4c 100%);
+}
+
+.kbd-enter-hint {
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-left: 4px;
+}
+
+/* ==========================================================================
+   RECEIPT & INVOICE PREVIEW MODAL LUXURY STYLES
+   ========================================================================== */
+.sale-success-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #dcfce7;
+  color: #16a34a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);
+}
+
+.receipt-tab-bar {
+  display: flex;
+  gap: 8px;
+  background: #fff7fa;
+  padding: 10px 1.5rem 0;
+  border-bottom: 1px solid #fce7ec;
+}
+
+.receipt-tab-pill {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  border-radius: 10px 10px 0 0;
+  border: 1px solid transparent;
+  border-bottom: none;
+  background: transparent;
+  color: #64748b;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.receipt-tab-pill:hover {
+  color: #C95D7E;
+}
+
+.receipt-tab-pill.active {
+  background: #ffffff;
+  color: #C95D7E;
+  font-weight: 700;
+  border-color: #fce7ec;
+  border-bottom-color: #ffffff;
+  box-shadow: 0 -2px 8px rgba(201, 93, 126, 0.08);
+}
+
+.receipt-paper-stage {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+}
+

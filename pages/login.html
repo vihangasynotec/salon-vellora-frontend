@@ -57,43 +57,6 @@
       color: var(--text-muted);
       margin-bottom: 1.75rem;
     }
-    .quick-roles-panel {
-      margin-top: 1.75rem;
-      padding-top: 1.25rem;
-      border-top: 1px dashed var(--border);
-      text-align: left;
-    }
-    .quick-roles-title {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: var(--text-light);
-      margin-bottom: 0.65rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .role-pills-wrap {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .role-quick-btn {
-      padding: 0.35rem 0.65rem;
-      background: var(--bg-main);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-pill);
-      font-size: 0.74rem;
-      font-weight: 600;
-      color: var(--text-main);
-      cursor: pointer;
-      transition: var(--transition);
-    }
-    .role-quick-btn:hover {
-      background: var(--primary-light);
-      color: var(--primary-dark);
-      border-color: var(--accent);
-    }
   </style>
 </head>
 <body>
@@ -130,21 +93,6 @@
         </button>
       </form>
 
-      <!-- Quick Role Switcher for seamless testing -->
-      <div class="quick-roles-panel">
-        <div class="quick-roles-title">
-          <span>Quick Demo Access</span>
-          <span style="color:var(--primary);font-size:0.7rem;">Password: password123</span>
-        </div>
-        <div class="role-pills-wrap">
-          <button class="role-quick-btn" onclick="fillCreds('admin@salonvellora.com')">Super Admin</button>
-          <button class="role-quick-btn" onclick="fillCreds('manager@salonvellora.com')">Manager</button>
-          <button class="role-quick-btn" onclick="fillCreds('reception@salonvellora.com')">Receptionist</button>
-          <button class="role-quick-btn" onclick="fillCreds('cashier@salonvellora.com')">Cashier</button>
-          <button class="role-quick-btn" onclick="fillCreds('stylist@salonvellora.com')">Stylist Staff</button>
-        </div>
-      </div>
-
       <div style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--text-muted);">
         <a href="catalog.html" target="_blank" style="color:var(--primary);font-weight:600;display:inline-flex;align-items:center;gap:4px;">
           <i data-lucide="external-link" style="width:14px;"></i> View Public Customer Catalog
@@ -164,11 +112,6 @@
   <script src="../js/common.js"></script>
   <script>
     lucide.createIcons();
-
-    function fillCreds(email) {
-      document.getElementById('email').value = email;
-      document.getElementById('password').value = 'password123';
-    }
 
     function togglePasswordVisibility() {
       const pass = document.getElementById('password');

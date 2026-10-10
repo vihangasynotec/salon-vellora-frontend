@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -36,13 +36,12 @@
                 <th>Specialization</th>
                 <th>Phone Number</th>
                 <th>Base Salary</th>
-                <th>Commission %</th>
                 <th>Status</th>
                 <th style="text-align:right;">Actions</th>
               </tr>
             </thead>
             <tbody id="staff-table-body">
-              <tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--text-muted);">Loading staff directory...</td></tr>
+              <tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text-muted);">Loading staff directory...</td></tr>
             </tbody>
           </table>
         </div>
@@ -75,7 +74,7 @@
           <input type="hidden" id="staff-id">
           <div style="margin-bottom:1rem;">
             <label class="form-label-custom">Stylist Full Name *</label>
-            <input type="text" id="s-name" class="form-control-custom" required placeholder="e.g. Sachini Senanayake">
+            <input type="text" id="s-name" class="form-control-custom" required placeholder="e.g. Dilrukshi Gunawardena">
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
             <div>
@@ -91,15 +90,9 @@
             <label class="form-label-custom">Specialization (Skills)</label>
             <input type="text" id="s-spec" class="form-control-custom" placeholder="e.g. Keratin Treatments, Balayage, Bridal Hair">
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
-            <div>
-              <label class="form-label-custom">Base Salary (LKR)</label>
-              <input type="number" id="s-salary" class="form-control-custom" value="0" min="0">
-            </div>
-            <div>
-              <label class="form-label-custom">Commission Rate (%)</label>
-              <input type="number" id="s-comm" class="form-control-custom" value="8" min="0" max="100" step="0.5">
-            </div>
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Base Salary (LKR)</label>
+            <input type="number" id="s-salary" class="form-control-custom" value="20000" min="0" placeholder="Default: 20,000">
           </div>
           <div>
             <label class="form-label-custom">Email Address</label>

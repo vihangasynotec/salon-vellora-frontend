@@ -136,5 +136,5 @@ function downloadReportPdf() {
   }
   const html = PrintEngine.generateA4Report(currentReportData);
   const p = currentReportData.period || { start: "from", end: "to" };
-  PrintEngine.downloadAsPdf(html, `Salon_Vellora_Executive_Report_${p.start}_${p.end}.pdf`, false);
+  PrintEngine.downloadAsPdf(html, `Salon_Vellora_Executive_Report_${p.start}_${p.end}.pdf`, 'a4');
 }
