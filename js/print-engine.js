@@ -222,9 +222,10 @@ const PrintEngine = {
   },
 
   /**
-   * Generates next-level Luxury A4 Tax Invoice HTML
+   * Generates next-level Luxury Half-A4 (A5 Landscape) Tax Invoice HTML
+   * Perfect A5 Landscape proportions (210mm x 148.5mm)
    */
-  generateA4Invoice(sale) {
+  generateA4Invoice(sale, copyLabel = "TAX INVOICE", isCompact = false) {
     const s = sale || {};
     const prefix = this.getAssetPrefix();
     const info = this.salonInfo;
@@ -248,88 +249,90 @@ const PrintEngine = {
     const paymentMethod = (s.payment_method || "CASH").toUpperCase();
     const invoiceNum = s.invoice_number || "SV-INV-000000";
 
+    const padY = isCompact ? "4px 8px" : "5px 8px";
+    const fontSizeMain = isCompact ? "11px" : "11.5px";
+    const titleSize = isCompact ? "17px" : "19px";
+    const logoSize = isCompact ? "40px" : "46px";
+    const wrapperPad = isCompact ? "9px 14px" : "13px 18px";
+
     let rowsHtml = items.map((item, idx) => {
       const unitPrice = parseFloat(item.unit_price || item.price || item.total_price);
       const total = parseFloat(item.total_price);
       const qty = item.quantity || 1;
-      const typeLabel = (item.item_type || "service").toUpperCase();
+      const typeLabel = (item.item_type || (item.deposit_amount ? "rental" : "service")).toUpperCase();
+      const isRental = typeLabel === 'RENTAL' || !!item.deposit_amount;
+      const depositVal = parseFloat(item.deposit_amount || item.security_deposit || 0);
+
       return `
-        <tr style="border-bottom: 1px solid #f3e8eb;">
-          <td style="padding: 6px 8px; font-weight: 600; color: #6b7280; font-size: 10px;">${idx + 1}</td>
-          <td style="padding: 6px 8px;">
-            <div style="font-weight: 700; color: #1f2937; font-size: 11.5px;">${item.name}</div>
-            <div style="font-size: 8.5px; color: #C95D7E; text-transform: uppercase; font-weight: 600;">${typeLabel}</div>
+        <tr style="border-bottom: 1px solid #fce7ec;">
+          <td style="padding: ${padY}; font-weight: 600; color: #6b7280; font-size: 9.5px; width: 22px;">${idx + 1}</td>
+          <td style="padding: ${padY};">
+            <div style="font-weight: 700; color: #1f2937; font-size: ${fontSizeMain}; line-height: 1.25;">
+              ${item.name}
+              ${isRental ? `<span style="display:inline-block; font-size: 7.5px; font-weight: 800; background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 1px 4px; border-radius: 4px; margin-left: 5px; vertical-align: middle;">24H RENTAL</span>` : ''}
+            </div>
+            <div style="font-size: 8px; color: #C95D7E; text-transform: uppercase; font-weight: 600; margin-top: 1px;">
+              ${typeLabel} ${depositVal > 0 ? `&bull; <span style="color:#b45309; font-weight:700;">Deposit: LKR ${depositVal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>` : ''}
+            </div>
           </td>
-          <td style="padding: 6px 8px; text-align: center; font-weight: 600; color: #374151; font-size: 11px;">${qty}</td>
-          <td style="padding: 6px 8px; text-align: right; color: #374151; font-size: 11px;">LKR ${unitPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-          <td style="padding: 6px 8px; text-align: right; font-weight: 700; color: #111827; font-size: 11.5px;">LKR ${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+          <td style="padding: ${padY}; text-align: center; font-weight: 700; color: #374151; font-size: 10.5px; width: 35px;">${qty}</td>
+          <td style="padding: ${padY}; text-align: right; color: #374151; font-size: 10.5px; width: 95px;">LKR ${unitPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+          <td style="padding: ${padY}; text-align: right; font-weight: 800; color: #111827; font-size: ${fontSizeMain}; width: 105px;">LKR ${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
         </tr>
       `;
     }).join("");
 
     return `
-      <div class="luxury-a4-wrapper luxury-half-a4-invoice" style="width: 100%; max-width: 720px; margin: 0 auto; background: #ffffff; padding: 20px 24px; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1f2937; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+      <div class="luxury-a4-wrapper luxury-half-a4-invoice" style="width: 100%; max-width: 740px; margin: 0 auto; background: #ffffff; padding: ${wrapperPad}; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1f2937; border: 1px solid #f1c2d0; border-radius: 10px; box-shadow: 0 2px 12px rgba(201,93,126,0.06); position: relative;">
         
-        <!-- Header Banner with Gold/Blush Border -->
-        <div style="border-bottom: 2px solid #C95D7E; padding-bottom: 12px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-start;">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <img src="${prefix}assets/logocircel.jpg" alt="Salon Vellora" style="width: 52px; height: 52px; border-radius: 12px; object-fit: cover; border: 1.5px solid #C95D7E; box-shadow: 0 2px 8px rgba(201,93,126,0.15);" onerror="this.src='${prefix}assets/salonvelora.png'">
+        <!-- Header Banner with Salon Vellora Branding -->
+        <div style="border-bottom: 2px solid #C95D7E; padding-bottom: 7px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="${prefix}assets/logocircel.jpg" alt="Salon Vellora" style="width: ${logoSize}; height: ${logoSize}; border-radius: 10px; object-fit: cover; border: 1.5px solid #C95D7E; box-shadow: 0 2px 6px rgba(201,93,126,0.15);" onerror="this.src='${prefix}assets/salonvelora.png'">
             <div>
-              <h1 style="font-family: 'Playfair Display', Georgia, serif; font-size: 22px; font-weight: 800; color: #C95D7E; margin: 0; line-height: 1.15; letter-spacing: 0.5px;">SALON VELLORA</h1>
-              <div style="font-size: 9.5px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: 1.2px; margin-top: 2px;">Ladies Salon & Bridal Dressing</div>
-              <div style="font-size: 9px; color: #6b7280; margin-top: 2px;">Galwatawaththa Junction, Pinnaduwa, Galle, Sri Lanka</div>
-              <div style="font-size: 9px; color: #6b7280;">Tel: <b>074 084 4739</b> | Email: salonvellora26@gmail.com</div>
+              <div style="font-family: 'Playfair Display', Georgia, serif; font-size: ${titleSize}; font-weight: 900; color: #C95D7E; margin: 0; line-height: 1.1; letter-spacing: 0.5px;">SALON VELLORA</div>
+              <div style="font-size: 8.5px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: 1px; margin-top: 1px;">Ladies Salon & Bridal Dressing</div>
+              <div style="font-size: 8px; color: #6b7280; margin-top: 1px;">Galwatawaththa Junction, Pinnaduwa, Galle &bull; Tel: <b>074 084 4739</b></div>
             </div>
           </div>
 
-          <div style="text-align: right;">
-            <div style="display: inline-block; background: #C95D7E; color: #ffffff; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; padding: 4px 12px; border-radius: 14px; margin-bottom: 5px;">TAX INVOICE</div>
-            <div style="font-family: monospace; font-size: 13.5px; font-weight: 800; color: #111827;">${invoiceNum}</div>
-            <div style="font-size: 9.5px; color: #6b7280; margin-top: 2px;">Date: <b>${dateFormatted}</b></div>
-            <div style="font-size: 9.5px; color: #059669; font-weight: 700; margin-top: 1px;">STATUS: PAID IN FULL</div>
+          <div style="text-align: right; flex-shrink: 0;">
+            <div style="display: inline-block; background: #C95D7E; color: #ffffff; font-weight: 800; font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; padding: 2.5px 9px; border-radius: 10px; margin-bottom: 2px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">${copyLabel}</div>
+            <div style="font-family: monospace; font-size: 12px; font-weight: 800; color: #111827;">${invoiceNum}</div>
+            <div style="font-size: 8px; color: #6b7280; margin-top: 1px;">Date: <b>${dateFormatted}</b> &bull; <span style="color: #059669; font-weight: 700;">PAID IN FULL</span></div>
           </div>
         </div>
 
         <!-- 2-Column Client & Bill Info Grid -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-          <div style="background: #fdf2f5; border: 1px solid #fce7ec; border-radius: 8px; padding: 8px 12px;">
-            <div style="font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #C95D7E; margin-bottom: 4px;">BILLED TO (CLIENT)</div>
-            <div style="font-size: 12.5px; font-weight: 700; color: #111827; margin-bottom: 2px;">${customerName}</div>
-            <div style="font-size: 9.5px; color: #4b5563; margin-bottom: 1px;">Phone: <b>${customerPhone}</b></div>
-            <div style="font-size: 9.5px; color: #4b5563; margin-bottom: 1px;">Email: ${customerEmail}</div>
-            <div style="font-size: 9.5px; color: #4b5563;">Address: ${customerAddress}</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 7px;">
+          <div style="background: #fff8fa; border: 1px solid #fce7ec; border-radius: 6px; padding: 5px 8px;">
+            <div style="font-size: 7.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: #C95D7E; margin-bottom: 1px;">BILLED TO (CLIENT)</div>
+            <div style="font-size: 11px; font-weight: 700; color: #111827; margin-bottom: 1px;">${customerName}</div>
+            <div style="font-size: 8px; color: #4b5563;">Phone: <b>${customerPhone}</b> &bull; ${customerAddress}</div>
           </div>
 
-          <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 12px;">
-            <div style="font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #4b5563; margin-bottom: 4px;">PAYMENT & SERVICE DETAILS</div>
-            <div style="display: flex; justify-content: space-between; font-size: 9.5px; margin-bottom: 2px;">
-              <span style="color: #6b7280;">Payment Method:</span>
-              <span style="font-weight: 700; color: #111827;">${paymentMethod}</span>
+          <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 8px;">
+            <div style="font-size: 7.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: #4b5563; margin-bottom: 1px;">PAYMENT & TRANSACTION</div>
+            <div style="display: flex; justify-content: space-between; font-size: 8px; margin-bottom: 1px;">
+              <span style="color: #6b7280;">Payment Method: <b style="color: #111827;">${paymentMethod}</b></span>
+              <span style="color: #6b7280;">Cashier: <b style="color: #111827;">${cashierName}</b></span>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 9.5px; margin-bottom: 2px;">
-              <span style="color: #6b7280;">Handled By (Cashier):</span>
-              <span style="font-weight: 600; color: #111827;">${cashierName}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 9.5px; margin-bottom: 2px;">
-              <span style="color: #6b7280;">Business Reg. No:</span>
-              <span style="font-weight: 600; color: #111827;">${info.regNo}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 9.5px;">
-              <span style="color: #6b7280;">Currency:</span>
-              <span style="font-weight: 700; color: #C95D7E;">Sri Lankan Rupee (LKR)</span>
+            <div style="display: flex; justify-content: space-between; font-size: 8px;">
+              <span style="color: #6b7280;">Reg No: ${info.regNo}</span>
+              <span style="color: #C95D7E; font-weight: 700;">Currency: LKR</span>
             </div>
           </div>
         </div>
 
         <!-- Line Items Table -->
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 7px;">
           <thead>
-            <tr style="background: #fdf2f5; border-top: 1.5px solid #C95D7E; border-bottom: 1.5px solid #C95D7E;">
-              <th style="padding: 6px 8px; text-align: left; font-size: 9.5px; font-weight: 700; color: #C95D7E; text-transform: uppercase; width: 28px;">#</th>
-              <th style="padding: 6px 8px; text-align: left; font-size: 9.5px; font-weight: 700; color: #C95D7E; text-transform: uppercase;">Description / Treatment</th>
-              <th style="padding: 6px 8px; text-align: center; font-size: 9.5px; font-weight: 700; color: #C95D7E; text-transform: uppercase; width: 45px;">Qty</th>
-              <th style="padding: 6px 8px; text-align: right; font-size: 9.5px; font-weight: 700; color: #C95D7E; text-transform: uppercase; width: 110px;">Unit Rate</th>
-              <th style="padding: 6px 8px; text-align: right; font-size: 9.5px; font-weight: 700; color: #C95D7E; text-transform: uppercase; width: 115px;">Amount</th>
+            <tr style="background: #fdf2f5; border-top: 1.5px solid #C95D7E; border-bottom: 1.5px solid #C95D7E; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+              <th style="padding: 3.5px 8px; text-align: left; font-size: 8px; font-weight: 700; color: #C95D7E; text-transform: uppercase; width: 22px;">#</th>
+              <th style="padding: 3.5px 8px; text-align: left; font-size: 8px; font-weight: 700; color: #C95D7E; text-transform: uppercase;">Description / Service / Rental</th>
+              <th style="padding: 3.5px 8px; text-align: center; font-size: 8px; font-weight: 700; color: #C95D7E; text-transform: uppercase; width: 35px;">Qty</th>
+              <th style="padding: 3.5px 8px; text-align: right; font-size: 8px; font-weight: 700; color: #C95D7E; text-transform: uppercase; width: 95px;">Unit Rate</th>
+              <th style="padding: 3.5px 8px; text-align: right; font-size: 8px; font-weight: 700; color: #C95D7E; text-transform: uppercase; width: 105px;">Amount</th>
             </tr>
           </thead>
           <tbody>
@@ -337,65 +340,98 @@ const PrintEngine = {
           </tbody>
         </table>
 
-        <!-- Totals & Payment Summary Box -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; gap: 16px;">
-          <!-- Bank Transfer & Notes Info -->
-          <div style="flex: 1; background: #fafafa; border: 1px dashed #d1d5db; border-radius: 6px; padding: 7px 10px; font-size: 9px; color: #4b5563;">
-            <div style="font-weight: 700; color: #111827; margin-bottom: 2px; text-transform: uppercase; font-size: 8.5px; letter-spacing: 0.5px;">Bank Payment Details</div>
-            <div>Bank: <b>${info.bank.bankName}</b></div>
-            <div>Account Name: <b>${info.bank.accountName}</b></div>
-            <div>Account No: <b style="font-family: monospace;">${info.bank.accountNo}</b> (${info.bank.branch})</div>
-            <div style="margin-top: 3px; font-size: 8px; color: #6b7280;">Thank you for trusting Salon Vellora with your beauty & bridal transformation.</div>
+        <!-- Totals & Notes Section -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 7px; gap: 10px;">
+          <!-- Bank Details -->
+          <div style="flex: 1; background: #fafafa; border: 1px dashed #d1d5db; border-radius: 5px; padding: 4px 7px; font-size: 7.5px; color: #4b5563; line-height: 1.3;">
+            <div style="font-weight: 700; color: #111827; margin-bottom: 1px; text-transform: uppercase; font-size: 7.5px; letter-spacing: 0.5px;">Bank Payment Details</div>
+            <div>Bank: <b>${info.bank.bankName}</b> &bull; Acc: <b style="font-family: monospace;">${info.bank.accountNo}</b></div>
+            <div>Name: <b>${info.bank.accountName}</b> (${info.bank.branch})</div>
+            <div style="margin-top: 1.5px; font-size: 7px; color: #6b7280;">Thank you for trusting Salon Vellora with your beauty & bridal transformation.</div>
           </div>
 
           <!-- Totals Calculation Table -->
-          <div style="width: 250px;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 10.5px;">
+          <div style="width: 215px; flex-shrink: 0;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 9px;">
               <tr>
-                <td style="padding: 2.5px 0; color: #6b7280;">Subtotal:</td>
-                <td style="padding: 2.5px 0; text-align: right; font-weight: 600; color: #111827;">LKR ${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                <td style="padding: 1.5px 0; color: #6b7280;">Subtotal:</td>
+                <td style="padding: 1.5px 0; text-align: right; font-weight: 600; color: #111827;">LKR ${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
               </tr>
               ${discount > 0 ? `
               <tr>
-                <td style="padding: 2.5px 0; color: #059669;">Special Discount:</td>
-                <td style="padding: 2.5px 0; text-align: right; font-weight: 600; color: #059669;">- LKR ${discount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                <td style="padding: 1.5px 0; color: #059669;">Special Discount:</td>
+                <td style="padding: 1.5px 0; text-align: right; font-weight: 700; color: #059669;">- LKR ${discount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
               </tr>` : ''}
               ${tax > 0 ? `
               <tr>
-                <td style="padding: 2.5px 0; color: #6b7280;">Tax (VAT):</td>
-                <td style="padding: 2.5px 0; text-align: right; font-weight: 600; color: #111827;">LKR ${tax.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                <td style="padding: 1.5px 0; color: #6b7280;">Tax (VAT):</td>
+                <td style="padding: 1.5px 0; text-align: right; font-weight: 600; color: #111827;">LKR ${tax.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
               </tr>` : ''}
               <tr style="border-top: 1.5px solid #C95D7E; border-bottom: 1.5px solid #C95D7E;">
-                <td style="padding: 5px 0; font-size: 11.5px; font-weight: 800; color: #C95D7E; text-transform: uppercase;">GRAND TOTAL:</td>
-                <td style="padding: 5px 0; text-align: right; font-size: 13.5px; font-weight: 800; color: #C95D7E;">LKR ${grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                <td style="padding: 2.5px 0; font-size: 9.5px; font-weight: 800; color: #C95D7E; text-transform: uppercase;">GRAND TOTAL:</td>
+                <td style="padding: 2.5px 0; text-align: right; font-size: 11.5px; font-weight: 800; color: #C95D7E;">LKR ${grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
               </tr>
               <tr>
-                <td style="padding: 3px 0 1px; color: #6b7280; font-size: 9px;">Amount Tendered (${paymentMethod}):</td>
-                <td style="padding: 3px 0 1px; text-align: right; font-weight: 700; color: #111827; font-size: 9px;">LKR ${paidAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                <td style="padding: 1.5px 0 1px; color: #6b7280; font-size: 8px;">Amount Tendered (${paymentMethod}):</td>
+                <td style="padding: 1.5px 0 1px; text-align: right; font-weight: 700; color: #111827; font-size: 8px;">LKR ${paidAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
               </tr>
               ${changeAmount > 0 ? `
               <tr>
-                <td style="padding: 1px 0; color: #C95D7E; font-size: 9px; font-weight: 600;">Change Balance:</td>
-                <td style="padding: 1px 0; text-align: right; font-weight: 700; color: #C95D7E; font-size: 9px;">LKR ${changeAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                <td style="padding: 1px 0; color: #C95D7E; font-size: 8px; font-weight: 600;">Change Balance:</td>
+                <td style="padding: 1px 0; text-align: right; font-weight: 700; color: #C95D7E; font-size: 8px;">LKR ${changeAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
               </tr>` : ''}
             </table>
           </div>
         </div>
 
         <!-- Terms & Signatures -->
-        <div style="border-top: 1px solid #e5e7eb; padding-top: 10px; display: flex; justify-content: space-between; align-items: flex-end;">
-          <div style="font-size: 8.5px; color: #9ca3af; max-width: 320px; line-height: 1.3;">
-            <b>Important Notice:</b> All bridal reservations and chemical salon treatments (rebonding, keratin, color) are non-refundable once performed. Products sold may be exchanged within 7 days in unopened condition.
+        <div style="border-top: 1px solid #f1c2d0; padding-top: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
+          <div style="font-size: 7px; color: #9ca3af; max-width: 320px; line-height: 1.25;">
+            <b>Important Notice:</b> All bridal reservations & chemical treatments are non-refundable once performed. Products sold may be exchanged within 7 days unopened. Rental items must be returned within 24 hours.
           </div>
 
-          <div style="text-align: center; min-width: 170px;">
-            <div style="font-family: 'Playfair Display', cursive, serif; font-size: 18px; font-style: italic; color: #C95D7E; margin-bottom: 2px; letter-spacing: 0.5px;">Salon Vellora</div>
-            <div style="width: 160px; border-top: 1px solid #9ca3af; margin: 0 auto 3px;"></div>
-            <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #374151;">Authorized Seal & Signature</div>
-            <div style="font-size: 9px; font-weight: 600; color: #6b7280; margin-top: 1px;">Salon Vellora Signature</div>
+          <div style="text-align: center; min-width: 130px;">
+            <div style="font-family: 'Playfair Display', cursive, serif; font-size: 13px; font-style: italic; color: #C95D7E; margin-bottom: 1px; letter-spacing: 0.5px;">Salon Vellora</div>
+            <div style="width: 120px; border-top: 1px solid #9ca3af; margin: 0 auto 2px;"></div>
+            <div style="font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #374151;">Authorized Seal & Signature</div>
+            <div style="font-size: 7px; font-weight: 600; color: #6b7280;">Official Salon Vellora Copy</div>
           </div>
         </div>
 
+      </div>
+    `;
+  },
+
+  /**
+   * Generates 2-in-1 Dual Invoices on ONE standard A4 Sheet
+   * Top: Original Customer Copy (Landscape Half A4)
+   * Center: Perforated Tear/Cut Line with Scissor Icon
+   * Bottom: Duplicate Salon Office Copy (Landscape Half A4)
+   */
+  generateDualA4Invoice(sale) {
+    const customerCopy = this.generateA4Invoice(sale, "ORIGINAL &bull; CUSTOMER COPY", true);
+    const salonCopy = this.generateA4Invoice(sale, "DUPLICATE &bull; SALON COPY", true);
+
+    return `
+      <div class="luxury-dual-a4-sheet" style="width: 100%; max-width: 740px; margin: 0 auto; box-sizing: border-box; background: #ffffff;">
+        <!-- Top Half: Customer Copy -->
+        <div class="dual-copy-half customer-copy-half">
+          ${customerCopy}
+        </div>
+
+        <!-- Perforated Cut / Tear Divider Line -->
+        <div class="dual-cut-line" style="margin: 8px 0; display: flex; align-items: center; justify-content: center; gap: 8px; color: #9ca3af; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; user-select: none;">
+          <span style="flex: 1; border-top: 1.5px dashed #cbd5e1;"></span>
+          <span style="display: inline-flex; align-items: center; gap: 5px; background: #fff5f8; padding: 2px 10px; border-radius: 999px; border: 1px solid #fce7ec; color: #C95D7E;">
+            ✂ <span>Cut Along Line &bull; 2 Receipts on 1 A4 Sheet</span> ✂
+          </span>
+          <span style="flex: 1; border-top: 1.5px dashed #cbd5e1;"></span>
+        </div>
+
+        <!-- Bottom Half: Salon Copy -->
+        <div class="dual-copy-half salon-copy-half">
+          ${salonCopy}
+        </div>
       </div>
     `;
   },
@@ -691,6 +727,7 @@ const PrintEngine = {
     }
 
     const isThermal = (formatOrThermal === true || formatOrThermal === 'thermal');
+    const isDualA4 = (formatOrThermal === 'dual-a4' || formatOrThermal === 'a4-dual');
     const isFullA4 = (formatOrThermal === 'a4');
 
     let targetEl;
@@ -702,7 +739,7 @@ const PrintEngine = {
       targetEl.style.position = "absolute";
       targetEl.style.left = "-9999px";
       targetEl.style.top = "0";
-      targetEl.style.width = isThermal ? "72mm" : (isFullA4 ? "190mm" : "140mm");
+      targetEl.style.width = isThermal ? "72mm" : (isDualA4 ? "196mm" : (isFullA4 ? "190mm" : "196mm"));
       targetEl.style.background = "#ffffff";
       targetEl.style.boxSizing = "border-box";
       document.body.appendChild(targetEl);
@@ -750,6 +787,15 @@ const PrintEngine = {
           orientation: 'portrait'
         }
       };
+    } else if (isDualA4) {
+      // 2 Receipts on 1 standard A4 Sheet
+      opt = {
+        margin: [3, 4, 3, 4],
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2.2, useCORS: true, letterRendering: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
     } else if (isFullA4) {
       opt = {
         margin: [6, 6, 6, 6],
@@ -759,19 +805,19 @@ const PrintEngine = {
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
     } else {
-      // Default: Half-A4 (A5 ISO Standard: 148mm x 210mm)
+      // Half-A4 (A5 ISO Standard in Landscape: 210mm x 148.5mm)
       opt = {
-        margin: [4, 4, 4, 4],
+        margin: [3, 4, 3, 4],
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2.5, useCORS: true, letterRendering: true, logging: false },
-        jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
+        html2canvas: { scale: 2.4, useCORS: true, letterRendering: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a5', orientation: 'landscape' }
       };
     }
 
     try {
       if (window.common && window.common.showToast) {
-        const toastMsg = isThermal ? "Generating high-resolution 80mm PDF..." : (isFullA4 ? "Generating Luxury A4 PDF..." : "Generating Half A4 (A5) Invoice PDF...");
+        const toastMsg = isThermal ? "Generating high-resolution 80mm PDF..." : (isDualA4 ? "Generating 2-in-1 A4 Sheet PDF..." : (isFullA4 ? "Generating Luxury A4 PDF..." : "Generating Half A4 (Landscape) Invoice PDF..."));
         window.common.showToast(toastMsg, "info");
       }
       await html2pdf().set(opt).from(targetEl).save();
@@ -792,17 +838,31 @@ const PrintEngine = {
    * Prints 80mm receipt using browser print dialog with dedicated thermal styling
    */
   printThermal(elementOrHtml) {
-    this._triggerPrint(elementOrHtml, "print-receipt");
+    this._triggerPrint(elementOrHtml, "print-receipt", "@page { size: 80mm auto; margin: 0; }");
   },
 
   /**
-   * Prints A4 document using browser print dialog with dedicated A4 styling
+   * Prints Half-A4 Landscape receipt using browser print dialog
    */
-  printA4(elementOrHtml) {
-    this._triggerPrint(elementOrHtml, "print-a4");
+  printA4Half(elementOrHtml) {
+    this._triggerPrint(elementOrHtml, "print-a4-half-landscape", "@page { size: A5 landscape; margin: 3mm 4mm; }");
   },
 
-  _triggerPrint(elementOrHtml, bodyClass) {
+  /**
+   * Prints 2 Receipts on 1 standard A4 Sheet (Customer Copy + Salon Copy)
+   */
+  printDualA4(elementOrHtml) {
+    this._triggerPrint(elementOrHtml, "print-dual-a4", "@page { size: A4 portrait; margin: 4mm 5mm; }");
+  },
+
+  /**
+   * Backwards compatibility alias
+   */
+  printA4(elementOrHtml) {
+    this.printA4Half(elementOrHtml);
+  },
+
+  _triggerPrint(elementOrHtml, bodyClass, pageStyle = "") {
     let printHost = document.getElementById("salon-print-host");
     if (!printHost) {
       printHost = document.createElement("div");
@@ -810,6 +870,14 @@ const PrintEngine = {
       printHost.className = "print-only-container";
       document.body.appendChild(printHost);
     }
+
+    let dynStyle = document.getElementById("dynamic-print-page-style");
+    if (!dynStyle) {
+      dynStyle = document.createElement("style");
+      dynStyle.id = "dynamic-print-page-style";
+      document.head.appendChild(dynStyle);
+    }
+    dynStyle.innerHTML = pageStyle ? `@media print { ${pageStyle} }` : "";
 
     if (typeof elementOrHtml === "string") {
       printHost.innerHTML = elementOrHtml;
@@ -822,7 +890,8 @@ const PrintEngine = {
     setTimeout(() => {
       document.body.classList.remove(bodyClass);
       printHost.innerHTML = "";
-    }, 1000);
+      if (dynStyle) dynStyle.innerHTML = "";
+    }, 1200);
   }
 };
 

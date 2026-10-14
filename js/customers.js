@@ -172,10 +172,13 @@ async function initCustomerDetailsPage() {
     document.getElementById("c-total-spend").innerText = common.formatCurrency(c.total_spend || 0);
     document.getElementById("c-total-visits").innerText = c.total_visits || 0;
 
+    // Store client globally for receipt sharing
+    window._currentClientProfile = c;
+
     // Sales table
     const salesTbody = document.getElementById("client-sales-tbody");
     if (!c.sales || c.sales.length === 0) {
-      salesTbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:1.5rem;color:var(--text-muted);">No sales recorded yet.</td></tr>`;
+      salesTbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--text-muted);">No sales recorded yet.</td></tr>`;
     } else {
       salesTbody.innerHTML = c.sales.map(s => `
         <tr>
@@ -183,6 +186,11 @@ async function initCustomerDetailsPage() {
           <td>${common.formatDate(s.created_at)}</td>
           <td style="font-weight:700;">${common.formatCurrency(s.grand_total)}</td>
           <td><span class="badge-custom badge-success">${s.status}</span></td>
+          <td style="text-align:right;">
+            <button class="btn-whatsapp-sm" onclick="shareCustomerSaleWhatsApp(${s.id})" title="Share Receipt on WhatsApp">
+              <i data-lucide="message-circle" style="width:13px;height:13px;"></i>
+            </button>
+          </td>
         </tr>
       `).join("");
     }
@@ -190,7 +198,7 @@ async function initCustomerDetailsPage() {
     // Appointments table
     const aptTbody = document.getElementById("client-appointments-tbody");
     if (!c.appointments || c.appointments.length === 0) {
-      aptTbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:1.5rem;color:var(--text-muted);">No past appointments.</td></tr>`;
+      aptTbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--text-muted);">No past appointments.</td></tr>`;
     } else {
       aptTbody.innerHTML = c.appointments.map(a => `
         <tr>
@@ -201,6 +209,11 @@ async function initCustomerDetailsPage() {
           <td>${a.service ? a.service.name : 'Salon Service'}</td>
           <td>${a.staff ? a.staff.name : '-'}</td>
           <td><span class="badge-custom badge-primary">${a.status}</span></td>
+          <td style="text-align:right;">
+            <button class="btn-whatsapp-sm" onclick="shareCustomerAppointmentWhatsApp(${a.id})" title="Share Confirmation via WhatsApp">
+              <i data-lucide="message-circle" style="width:13px;height:13px;"></i>
+            </button>
+          </td>
         </tr>
       `).join("");
     }
@@ -222,7 +235,40 @@ async function initCustomerDetailsPage() {
       `).join("");
     }
 
+    if (window.lucide) lucide.createIcons();
+
   } catch (err) {
     common.showToast(err.message || "Failed to load client profile.", "error");
+  }
+}
+
+async function shareCustomerSaleWhatsApp(saleId) {
+  if (!window.WhatsAppShare) {
+    common.showToast("WhatsApp module not available.", "error");
+    return;
+  }
+  try {
+    const res = await api.get(`/sales/${saleId}`);
+    if (res.success && res.data) {
+      window.WhatsAppShare.shareSaleReceipt(res.data);
+    } else {
+      common.showToast("Could not load invoice details.", "error");
+    }
+  } catch (e) {
+    common.showToast("Failed to share invoice via WhatsApp.", "error");
+  }
+}
+
+function shareCustomerAppointmentWhatsApp(aptId) {
+  if (!window.WhatsAppShare) {
+    common.showToast("WhatsApp module not available.", "error");
+    return;
+  }
+  const client = window._currentClientProfile;
+  if (!client || !client.appointments) return;
+  const apt = client.appointments.find(a => a.id === aptId);
+  if (apt) {
+    const clone = { ...apt, customer: client };
+    window.WhatsAppShare.shareAppointmentConfirmation(clone);
   }
 }

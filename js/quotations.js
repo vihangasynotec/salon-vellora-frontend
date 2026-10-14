@@ -59,6 +59,9 @@ async function loadQuotations() {
         <td><span class="badge-custom badge-${getQuoteStatusClass(q.status)}">${q.status}</span></td>
         <td>${q.preparer ? q.preparer.name : 'Salon Staff'}</td>
         <td style="text-align:right;">
+          <button class="btn-whatsapp-sm" onclick="shareQuoteRowWhatsApp(${q.id})" title="Share Quotation on WhatsApp">
+            <i data-lucide="message-circle" style="width:13px; height:13px;"></i> WhatsApp
+          </button>
           <button class="btn-soft-pink" style="padding:4px 8px;font-size:0.75rem;" onclick="viewQuotePreview(${q.id})" title="View / Print Quotation">
             <i data-lucide="eye" style="width:14px;"></i> View
           </button>
@@ -100,6 +103,9 @@ async function viewQuotePreview(id) {
 
     // Action buttons in modal
     let actionButtons = `
+      <button class="btn-whatsapp" onclick="handleShareViewingQuoteWhatsApp()">
+        <i data-lucide="message-circle"></i> Share on WhatsApp
+      </button>
       <button class="btn-secondary-custom" onclick="downloadQuotationA4Pdf()">
         <i data-lucide="download"></i> Download Quotation (PDF)
       </button>
@@ -474,3 +480,24 @@ async function handleCreateQuotation(e) {
     if (window.lucide) lucide.createIcons();
   }
 }
+
+function handleShareViewingQuoteWhatsApp() {
+  if (!currentViewingQuote) return;
+  WhatsAppShare.shareQuotation(currentViewingQuote);
+}
+
+async function shareQuoteRowWhatsApp(id) {
+  try {
+    let quote = null;
+    const res = await api.get(`/quotations/${id}`);
+    if (res && res.success && res.data) {
+      quote = res.data;
+    }
+    if (quote) {
+      WhatsAppShare.shareQuotation(quote);
+    }
+  } catch (err) {
+    common.showToast("Could not load quotation to share on WhatsApp.", "error");
+  }
+}
+

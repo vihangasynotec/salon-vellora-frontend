@@ -162,6 +162,9 @@ const common = {
             <a href="products.html" class="nav-link-custom ${activeMenuKey === 'products' ? 'active' : ''}" data-nav-permission="inventory.view">
               <i data-lucide="package"></i> Salon Products
             </a>
+            <a href="rentals.html" class="nav-link-custom ${activeMenuKey === 'rentals' ? 'active' : ''}" data-nav-permission="inventory.view">
+              <i data-lucide="gem"></i> Bridal & Dress Rentals (24h)
+            </a>
             <a href="purchases.html" class="nav-link-custom ${activeMenuKey === 'purchases' ? 'active' : ''}" data-nav-permission="purchases.view">
               <i data-lucide="truck"></i> Purchases
             </a>

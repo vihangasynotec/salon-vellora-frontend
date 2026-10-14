@@ -26,6 +26,29 @@
   z-index: 1015;
 }
 
+/* Responsive POS Grid & Layout Enhancements */
+@media (max-width: 1400px) {
+  .pos-layout {
+    grid-template-columns: 1fr 380px;
+    gap: 0.85rem;
+  }
+  .pos-items-grid {
+    grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 1200px) {
+  .pos-layout {
+    grid-template-columns: 1fr 350px;
+    gap: 0.75rem;
+  }
+  .pos-items-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 0.7rem;
+  }
+}
+
 @media (max-width: 1024px) {
   .app-sidebar {
     transform: translateX(-100%);
@@ -53,6 +76,11 @@
 
   .pos-layout {
     grid-template-columns: 1fr 340px;
+    gap: 0.75rem;
+  }
+
+  .pos-items-grid {
+    grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
   }
 
   .dashboard-charts-grid {
@@ -64,15 +92,34 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 880px) {
+  .pos-content-wrap {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
   .pos-layout {
     display: flex;
     flex-direction: column;
     height: auto;
+    max-height: none;
+    min-height: auto;
+  }
+
+  .pos-catalog-area {
+    min-height: auto;
+    height: auto;
+  }
+
+  .pos-items-grid {
+    max-height: 520px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   }
 
   .pos-cart-panel {
-    min-height: 450px;
+    min-height: auto;
+    height: auto;
   }
 
   .app-topbar {

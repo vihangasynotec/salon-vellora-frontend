@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bridal & Dress Rentals (24h) — Salon Vellora</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/pos.css">
+  <link rel="stylesheet" href="../css/print.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <div id="app-sidebar-placeholder"></div>
+
+    <main class="app-main">
+      <div id="app-topbar-placeholder"></div>
+
+      <div class="app-content">
+        <!-- Top Stats Row -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+          <div class="card-custom">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Active 24h Rentals</span>
+              <span class="badge-custom badge-rental"><i data-lucide="clock" style="width:12px;height:12px;"></i> In Customer Hands</span>
+            </div>
+            <div id="stat-active-rentals" style="font-size:1.8rem; font-weight:800; color:var(--primary-dark); margin-top:4px;">0</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Bridal sarees & accessories currently rented</div>
+          </div>
+
+          <div class="card-custom">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Overdue Returns</span>
+              <span class="badge-custom badge-overdue" id="stat-overdue-pill"><i data-lucide="alert-triangle" style="width:12px;height:12px;"></i> Needs Action</span>
+            </div>
+            <div id="stat-overdue-rentals" style="font-size:1.8rem; font-weight:800; color:var(--danger); margin-top:4px;">0</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Exceeded 24h rental period</div>
+          </div>
+
+          <div class="card-custom">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Deposits Currently Held</span>
+              <span class="badge-custom badge-success"><i data-lucide="shield-check" style="width:12px;height:12px;"></i> Refundable</span>
+            </div>
+            <div id="stat-deposits-held" style="font-size:1.8rem; font-weight:800; color:#059669; margin-top:4px;">LKR 0.00</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Security bonds in custody</div>
+          </div>
+
+          <div class="card-custom">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Rental Collection</span>
+              <span class="badge-custom badge-purple"><i data-lucide="sparkles" style="width:12px;height:12px;"></i> Catalog</span>
+            </div>
+            <div id="stat-available-items" style="font-size:1.8rem; font-weight:800; color:var(--purple); margin-top:4px;">0 / 0</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Items available for rent right now</div>
+          </div>
+        </div>
+
+        <!-- Section Navigation & Actions Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:12px; background:#ffffff; padding:0.85rem 1.25rem; border-radius:var(--radius-lg); border:1px solid var(--border);">
+          <div style="display:flex; gap:8px;">
+            <button id="tab-btn-active-orders" class="btn-primary-custom" onclick="switchRentalView('orders')">
+              <i data-lucide="clock"></i> Active 24h Rentals (<span id="active-tab-count">0</span>)
+            </button>
+            <button id="tab-btn-catalog" class="btn-secondary-custom" onclick="switchRentalView('catalog')">
+              <i data-lucide="grid"></i> Rental Items Catalog
+            </button>
+          </div>
+
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <button class="btn-secondary-custom" onclick="openNewOrderModal()" data-permission="pos.create" style="border-color:#fbcfe8; color:var(--primary-dark);">
+              <i data-lucide="user-check"></i> Issue 24h Rental
+            </button>
+            <button class="btn-primary-custom" onclick="openRentalItemModal()" data-permission="inventory.create">
+              <i data-lucide="plus-circle"></i> Add Rental Item
+            </button>
+          </div>
+        </div>
+
+        <!-- VIEW 1: ACTIVE 24H RENTALS & RETURNS TABLE -->
+        <div id="view-active-orders">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
+            <div style="flex:1; max-width:450px; position:relative;">
+              <input type="text" id="order-search" class="form-control-custom" placeholder="Search by customer name, phone, NIC or booking #..." style="padding-left:38px;" oninput="filterRentalOrders()">
+              <i data-lucide="search" style="position:absolute;left:12px;top:10px;width:18px;color:var(--text-light);"></i>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <select id="order-status-filter" class="form-select-custom" style="width:160px;" onchange="loadRentalOrders()">
+                <option value="all">All Bookings</option>
+                <option value="active" selected>Active & In Progress</option>
+                <option value="overdue">Overdue Returns (>24h)</option>
+                <option value="returned">Completed Returns</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-custom-container">
+            <table class="table-custom" style="min-width: 1080px;">
+              <thead>
+                <tr>
+                  <th style="min-width: 140px; white-space: nowrap;">Booking Ref</th>
+                  <th style="min-width: 165px; white-space: nowrap;">Customer / Contact</th>
+                  <th style="min-width: 235px; white-space: nowrap;">Rental Item</th>
+                  <th style="min-width: 130px; white-space: nowrap;">Start Time</th>
+                  <th style="min-width: 140px; white-space: nowrap;">24h Return Due</th>
+                  <th style="min-width: 130px; white-space: nowrap;">Time Left / Status</th>
+                  <th style="min-width: 105px; white-space: nowrap;">Rental Fee</th>
+                  <th style="min-width: 110px; white-space: nowrap;">Deposit Held</th>
+                  <th style="min-width: 150px; text-align: right; white-space: nowrap;">Actions & WhatsApp</th>
+                </tr>
+              </thead>
+              <tbody id="orders-table-body">
+                <tr><td colspan="9" style="text-align:center;padding:3rem;color:var(--text-muted);">Loading active rentals...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- VIEW 2: RENTAL ITEMS CATALOG (SAREES, ACCESSORIES, JEWELLERY, VEILS) -->
+        <div id="view-catalog" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
+            <div style="flex:1; max-width:400px; position:relative;">
+              <input type="text" id="catalog-search" class="form-control-custom" placeholder="Search sarees, crowns, jewellery, SKU..." style="padding-left:38px;" oninput="filterRentalCatalog()">
+              <i data-lucide="search" style="position:absolute;left:12px;top:10px;width:18px;color:var(--text-light);"></i>
+            </div>
+            <div class="pos-category-pills" style="margin-bottom:0; border-bottom:none; padding:0;">
+              <button class="category-pill active" onclick="filterCatalogCategory('all', this)">All Items</button>
+              <button class="category-pill" onclick="filterCatalogCategory('Sarees & Lehengas', this)">Sarees & Lehengas</button>
+              <button class="category-pill" onclick="filterCatalogCategory('Jewellery Sets', this)">Jewellery Sets</button>
+              <button class="category-pill" onclick="filterCatalogCategory('Hair & Veils', this)">Hair & Veils</button>
+              <button class="category-pill" onclick="filterCatalogCategory('Bridal Accessories', this)">Accessories</button>
+            </div>
+          </div>
+
+          <div id="rental-cards-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem;">
+            <!-- Dynamically populated luxury cards -->
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL: ADD / EDIT RENTAL ITEM -->
+  <div class="modal-overlay" id="rental-item-modal">
+    <div class="modal-card" style="max-width: 550px;">
+      <div class="modal-header-custom">
+        <h3 class="card-title-clean" id="rental-item-modal-title">Add Rental Item</h3>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeRentalItemModal()"><i data-lucide="x"></i></button>
+      </div>
+      <form onsubmit="handleSaveRentalItem(event)">
+        <div class="modal-body-custom">
+          <input type="hidden" id="r-item-id">
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Item Name *</label>
+            <input type="text" id="r-item-name" class="form-control-custom" required placeholder="e.g. Royal Maroon Velvet Bridal Saree & Blouse">
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Category *</label>
+              <select id="r-item-category" class="form-select-custom" required>
+                <option value="Sarees & Lehengas">Sarees & Lehengas</option>
+                <option value="Jewellery Sets">Jewellery Sets</option>
+                <option value="Hair & Veils">Hair & Veils</option>
+                <option value="Bridal Accessories">Bridal Accessories</option>
+                <option value="Footwear & Clutches">Footwear & Clutches</option>
+                <option value="Costumes & Props">Costumes & Props</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label-custom">SKU / Item Code *</label>
+              <input type="text" id="r-item-code" class="form-control-custom" required placeholder="e.g. RNT-SAR-001">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">24h Rental Fee (LKR) *</label>
+              <input type="number" id="r-item-price" class="form-control-custom" required min="0" value="3500">
+            </div>
+            <div>
+              <label class="form-label-custom">Security Deposit (LKR) *</label>
+              <input type="number" id="r-item-deposit" class="form-control-custom" required min="0" value="5000">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Late Fee / Day (LKR)</label>
+              <input type="number" id="r-item-late-fee" class="form-control-custom" min="0" value="1000">
+            </div>
+            <div>
+              <label class="form-label-custom">Total Quantity in Stock</label>
+              <input type="number" id="r-item-qty" class="form-control-custom" min="1" value="1">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Condition</label>
+              <select id="r-item-condition" class="form-select-custom">
+                <option value="Pristine">Pristine (New/Flawless)</option>
+                <option value="Excellent" selected>Excellent</option>
+                <option value="Good">Good</option>
+                <option value="Needs Cleaning">Needs Cleaning</option>
+                <option value="Minor Wear">Minor Wear</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label-custom">Image URL</label>
+              <input type="url" id="r-item-image" class="form-control-custom" placeholder="https://images.unsplash.com/...">
+            </div>
+          </div>
+          <div>
+            <label class="form-label-custom">Description & Saree/Jewellery Notes</label>
+            <textarea id="r-item-desc" class="form-control-custom" rows="2" placeholder="e.g. Blouse size 34-38, pure zari border, dry clean only"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer-custom">
+          <button type="button" class="btn-secondary-custom" onclick="closeRentalItemModal()">Cancel</button>
+          <button type="submit" id="btn-save-r-item" class="btn-primary-custom">Save Rental Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ISSUE NEW 24H RENTAL AGREEMENT -->
+  <div class="modal-overlay" id="new-rental-modal">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header-custom" style="background:#fff7fa; border-bottom:1px solid #fce7ec;">
+        <div>
+          <h3 class="card-title-clean" style="margin:0; font-family:'Playfair Display', serif;">Issue 24-Hour Rental</h3>
+          <span style="font-size:0.75rem; color:var(--text-muted);">Assign saree, jewellery or accessory to customer with 24h return tracking</span>
+        </div>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeNewRentalModal()"><i data-lucide="x"></i></button>
+      </div>
+      <form onsubmit="handleCreateRentalOrder(event)">
+        <div class="modal-body-custom">
+          <!-- Select or Enter Customer -->
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Customer / Bride Name *</label>
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="order-cust-name" class="form-control-custom" required placeholder="e.g. Dilini Perera">
+              <select id="order-cust-select" class="form-select-custom" style="width:140px;" onchange="onSelectExistingCustomer(this.value)">
+                <option value="">Or Pick Saved...</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Mobile (WhatsApp) *</label>
+              <input type="tel" id="order-cust-phone" class="form-control-custom" required placeholder="07XXXXXXXX">
+            </div>
+            <div>
+              <label class="form-label-custom">National ID / NIC (Security) *</label>
+              <input type="text" id="order-cust-nic" class="form-control-custom" required placeholder="e.g. 199558400123 / 955840123V">
+            </div>
+          </div>
+
+          <!-- Select Rental Item -->
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Rental Item *</label>
+            <select id="order-item-select" class="form-select-custom" required onchange="onRentalItemSelected(this.value)"></select>
+          </div>
+
+          <!-- Pricing & 24h Timing Banner -->
+          <div id="order-pricing-summary" style="background:#fff7ed; border:1px solid #fed7aa; border-radius:10px; padding:12px; margin-bottom:1rem; font-size:0.85rem;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span style="color:#7c2d12;">24h Rental Fee:</span>
+              <span id="order-calc-fee" style="font-weight:700; color:#c2410c;">LKR 0.00</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span style="color:#7c2d12;">Security Deposit (Refundable):</span>
+              <span id="order-calc-deposit" style="font-weight:700; color:#c2410c;">LKR 0.00</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-top:1px dashed #fed7aa; padding-top:4px; font-weight:800; font-size:0.95rem;">
+              <span>Total Payable Now:</span>
+              <span id="order-calc-total" style="color:#9a3412;">LKR 0.00</span>
+            </div>
+            <div style="margin-top:6px; font-size:0.75rem; color:#9a3412; display:flex; align-items:center; gap:5px;">
+              <i data-lucide="clock" style="width:13px; height:13px;"></i>
+              <span>Duration: <strong>Standard 24 Hours</strong> (Due exactly 24h from checkout)</span>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div>
+              <label class="form-label-custom">Payment Mode</label>
+              <select id="order-payment-method" class="form-select-custom">
+                <option value="cash">Cash</option>
+                <option value="card">Card POS</option>
+                <option value="bank_transfer">Bank / QR</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label-custom">Special Fitting / Booking Notes</label>
+              <input type="text" id="order-notes" class="form-control-custom" placeholder="e.g. Wedding at Galle Heritage">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer-custom" style="display:flex; justify-content:space-between; align-items:center;">
+          <button type="button" class="btn-secondary-custom" onclick="closeNewRentalModal()">Cancel</button>
+          <button type="submit" id="btn-submit-order" class="btn-primary-custom" style="box-shadow:0 4px 14px rgba(201,93,126,0.35);">
+            <i data-lucide="check-circle-2"></i> Issue Agreement & Collect Total
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: RETURN INSPECTION & DEPOSIT REFUND -->
+  <div class="modal-overlay" id="return-modal">
+    <div class="modal-card" style="max-width: 500px;">
+      <div class="modal-header-custom" style="background:#ecfdf5; border-bottom:1px solid #a7f3d0;">
+        <div>
+          <h3 class="card-title-clean" style="margin:0; color:#065f46; font-family:'Playfair Display', serif;">Return Inspection & Settle Deposit</h3>
+          <span style="font-size:0.75rem; color:#047857;">Inspect returned item condition, calculate any late/damage fees and refund deposit</span>
+        </div>
+        <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeReturnModal()"><i data-lucide="x"></i></button>
+      </div>
+      <form onsubmit="handleProcessReturn(event)">
+        <div class="modal-body-custom">
+          <input type="hidden" id="return-order-id">
+          
+          <div style="background:#ffffff; border:1px solid #d1fae5; border-radius:10px; padding:12px; margin-bottom:1rem;">
+            <div style="font-weight:700; font-size:1rem; color:#065f46;" id="return-item-title">Item Name</div>
+            <div style="font-size:0.8rem; color:#4b5563; margin-top:2px;" id="return-client-info">Client: Dilini Perera &bull; Ref: SV-RNT-2026-000001</div>
+            <div id="return-timing-badge" style="margin-top:6px;"></div>
+          </div>
+
+          <div style="margin-bottom:1rem;">
+            <label class="form-label-custom">Return Condition *</label>
+            <select id="return-condition" class="form-select-custom" required onchange="onReturnConditionChange(this.value)">
+              <option value="Returned in pristine condition — No damages" selected>Returned in pristine condition — No damages</option>
+              <option value="Good condition — Standard dry clean required">Good condition — Standard dry clean required</option>
+              <option value="Minor stain / light touch-up needed">Minor stain / light touch-up needed (Deduct Cleaning Fee)</option>
+              <option value="Damaged fabric / missing bead or jewelry part">Damaged fabric / missing bead or jewelry part (Deduct Repair Fee)</option>
+              <option value="Severely damaged / unusable">Severely damaged / unusable (Forfeit Deposit)</option>
+            </select>
+          </div>
+
+          <!-- Financial Deductions Grid -->
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:1rem;">
+            <div>
+              <label class="form-label-custom">Damage / Cleaning Fee (LKR)</label>
+              <input type="number" id="return-damage-fee" class="form-control-custom" min="0" value="0" oninput="calculateNetRefund()">
+            </div>
+            <div>
+              <label class="form-label-custom">Overdue Late Fee (LKR)</label>
+              <input type="number" id="return-late-fee" class="form-control-custom" min="0" value="0" oninput="calculateNetRefund()">
+            </div>
+          </div>
+
+          <!-- Refund Calculation Card -->
+          <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:12px; text-align:center;">
+            <span style="font-size:0.75rem; font-weight:700; color:#166534; text-transform:uppercase;">NET DEPOSIT DUE BACK TO CLIENT:</span>
+            <div id="return-net-refund" style="font-size:1.6rem; font-weight:900; color:#15803d; margin:4px 0;">LKR 0.00</div>
+            <span style="font-size:0.75rem; color:#166534;" id="return-deposit-held-note">Initial Deposit: LKR 0.00</span>
+          </div>
+
+          <div style="margin-top:1rem;">
+            <label class="form-label-custom">Inspection Remarks</label>
+            <input type="text" id="return-notes" class="form-control-custom" placeholder="e.g. Returned on time, dry cleaning verified, no missing pearls">
+          </div>
+        </div>
+        <div class="modal-footer-custom" style="display:flex; justify-content:space-between; align-items:center;">
+          <button type="button" class="btn-secondary-custom" onclick="closeReturnModal()">Cancel</button>
+          <button type="submit" id="btn-confirm-return" class="btn-primary-custom" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%);">
+            <i data-lucide="check-check"></i> Complete Return & Refund Deposit
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/html2pdf.bundle.min.js"></script>
+  <script src="../js/print-engine.js"></script>
+  <script src="../js/whatsapp-share.js"></script>
+  <script src="../js/rentals.js"></script>
+</body>
+</html>

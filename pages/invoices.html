@@ -63,9 +63,12 @@
       </div>
 
       <!-- Format Switcher Tabs -->
-      <div class="no-print" style="padding: 0.75rem 1.25rem 0; display:flex; gap:8px; background: #fff5f8; border-bottom: 1px solid #fce7ec;">
-        <button id="inv-tab-a4" class="btn-secondary-custom" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 8px 8px 0 0; background:#fff; border-bottom-color:transparent; font-weight:700; color:var(--primary);" onclick="switchInvoiceTab('a4')">
-          <i data-lucide="file-text" style="width:15px;"></i> Half A4 (A5) Tax Invoice
+      <div class="no-print" style="padding: 0.75rem 1.25rem 0; display:flex; gap:8px; background: #fff5f8; border-bottom: 1px solid #fce7ec; flex-wrap: wrap;">
+        <button id="inv-tab-a4-half" class="btn-secondary-custom" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 8px 8px 0 0; background:#fff; border-bottom-color:transparent; font-weight:700; color:var(--primary);" onclick="switchInvoiceTab('a4-half')">
+          <i data-lucide="file-text" style="width:15px;"></i> Half A4 (Landscape)
+        </button>
+        <button id="inv-tab-a4-dual" class="btn-secondary-custom" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 8px 8px 0 0; opacity: 0.8;" onclick="switchInvoiceTab('a4-dual')">
+          <i data-lucide="copy" style="width:15px;"></i> 2 Receipts on 1 A4 (Customer + Salon)
         </button>
         <button id="inv-tab-thermal" class="btn-secondary-custom" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 8px 8px 0 0; opacity: 0.8;" onclick="switchInvoiceTab('thermal')">
           <i data-lucide="receipt" style="width:15px;"></i> 80mm Thermal Receipt
@@ -120,6 +123,7 @@
   <script src="../js/common.js"></script>
   <script src="../js/html2pdf.bundle.min.js"></script>
   <script src="../js/print-engine.js"></script>
+  <script src="../js/whatsapp-share.js"></script>
   <script>
     let allSales = [];
     let viewingSale = null;
@@ -174,6 +178,9 @@
             <td style="font-weight:700;">${common.formatCurrency(s.grand_total)}</td>
             <td><span class="badge-custom badge-${s.status === 'completed' ? 'success' : 'danger'}">${s.status}</span></td>
             <td style="text-align:right;">
+              <button class="btn-whatsapp-sm" onclick="shareInvoiceRowWhatsApp(${s.id})" title="Share Receipt on WhatsApp">
+                <i data-lucide="message-circle" style="width:13px;height:13px;"></i> WhatsApp
+              </button>
               <button class="btn-soft-pink" style="padding:4px 8px;font-size:0.75rem;" onclick="viewInvoiceDetails(${s.id})" title="View / Reprint">
                 <i data-lucide="eye" style="width:14px;"></i> View
               </button>
@@ -210,38 +217,36 @@
       }
     }
 
-    let currentInvTab = 'a4';
+    let currentInvTab = 'a4-half';
 
     function switchInvoiceTab(format) {
       currentInvTab = format;
-      const btnA4 = document.getElementById("inv-tab-a4");
+      const btnA4Half = document.getElementById("inv-tab-a4-half");
+      const btnA4Dual = document.getElementById("inv-tab-a4-dual");
       const btnThermal = document.getElementById("inv-tab-thermal");
 
-      if (format === 'a4') {
-        btnA4.style.background = "#fff";
-        btnA4.style.fontWeight = "700";
-        btnA4.style.color = "var(--primary)";
-        btnA4.style.opacity = "1";
-        btnA4.style.borderBottomColor = "transparent";
+      const allTabs = [
+        { btn: btnA4Half, id: 'a4-half' },
+        { btn: btnA4Dual, id: 'a4-dual' },
+        { btn: btnThermal, id: 'thermal' }
+      ];
 
-        btnThermal.style.background = "transparent";
-        btnThermal.style.fontWeight = "500";
-        btnThermal.style.color = "var(--text-dark)";
-        btnThermal.style.opacity = "0.75";
-        btnThermal.style.borderBottomColor = "#fce7ec";
-      } else {
-        btnThermal.style.background = "#fff";
-        btnThermal.style.fontWeight = "700";
-        btnThermal.style.color = "var(--primary)";
-        btnThermal.style.opacity = "1";
-        btnThermal.style.borderBottomColor = "transparent";
-
-        btnA4.style.background = "transparent";
-        btnA4.style.fontWeight = "500";
-        btnA4.style.color = "var(--text-dark)";
-        btnA4.style.opacity = "0.75";
-        btnA4.style.borderBottomColor = "#fce7ec";
-      }
+      allTabs.forEach(t => {
+        if (!t.btn) return;
+        if (t.id === format) {
+          t.btn.style.background = "#fff";
+          t.btn.style.fontWeight = "700";
+          t.btn.style.color = "var(--primary)";
+          t.btn.style.opacity = "1";
+          t.btn.style.borderBottomColor = "transparent";
+        } else {
+          t.btn.style.background = "transparent";
+          t.btn.style.fontWeight = "500";
+          t.btn.style.color = "var(--text-dark)";
+          t.btn.style.opacity = "0.75";
+          t.btn.style.borderBottomColor = "#fce7ec";
+        }
+      });
 
       renderInvoiceModalPreview();
     }
@@ -251,16 +256,35 @@
       const container = document.getElementById("invoice-print-area");
       const actions = document.getElementById("invoice-modal-actions");
 
-      if (currentInvTab === 'a4') {
-        container.innerHTML = PrintEngine.generateA4Invoice(viewingSale);
+      if (currentInvTab === 'a4-half') {
+        container.innerHTML = PrintEngine.generateA4Invoice(viewingSale, "HALF A4 TAX INVOICE", false);
         actions.innerHTML = `
           <button class="btn-secondary-custom" onclick="closeInvoicePreview()">Close</button>
-          <div style="display:flex; gap:8px;">
-            <button class="btn-secondary-custom" onclick="downloadInvoiceA4Pdf()">
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn-whatsapp" onclick="handleShareViewingInvoiceWhatsApp()">
+              <i data-lucide="message-circle"></i> Share on WhatsApp
+            </button>
+            <button class="btn-secondary-custom" onclick="downloadInvoiceA4HalfPdf()">
               <i data-lucide="download"></i> Download Half A4 (PDF)
             </button>
-            <button class="btn-primary-custom" onclick="printInvoiceA4()">
-              <i data-lucide="printer"></i> Print Half A4 Invoice
+            <button class="btn-primary-custom" onclick="printInvoiceA4Half()">
+              <i data-lucide="printer"></i> Print Half A4 (Landscape)
+            </button>
+          </div>
+        `;
+      } else if (currentInvTab === 'a4-dual') {
+        container.innerHTML = PrintEngine.generateDualA4Invoice(viewingSale);
+        actions.innerHTML = `
+          <button class="btn-secondary-custom" onclick="closeInvoicePreview()">Close</button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn-whatsapp" onclick="handleShareViewingInvoiceWhatsApp()">
+              <i data-lucide="message-circle"></i> Share on WhatsApp
+            </button>
+            <button class="btn-secondary-custom" onclick="downloadInvoiceDualA4Pdf()">
+              <i data-lucide="download"></i> Download 2-in-1 A4 (PDF)
+            </button>
+            <button class="btn-primary-custom" onclick="printInvoiceDualA4()" style="box-shadow: 0 4px 12px rgba(201,93,126,0.35);">
+              <i data-lucide="printer"></i> Print 2 Receipts on 1 A4
             </button>
           </div>
         `;
@@ -268,7 +292,10 @@
         container.innerHTML = PrintEngine.generateThermalReceipt(viewingSale);
         actions.innerHTML = `
           <button class="btn-secondary-custom" onclick="closeInvoicePreview()">Close</button>
-          <div style="display:flex; gap:8px;">
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn-whatsapp" onclick="handleShareViewingInvoiceWhatsApp()">
+              <i data-lucide="message-circle"></i> Share on WhatsApp
+            </button>
             <button class="btn-secondary-custom" onclick="downloadInvoiceThermalPdf()">
               <i data-lucide="download"></i> Download Receipt (PDF)
             </button>
@@ -286,16 +313,28 @@
       document.getElementById("invoice-preview-modal").classList.remove("active");
     }
 
-    function printInvoiceA4() {
+    function printInvoiceA4Half() {
       if (!viewingSale) return;
-      const html = PrintEngine.generateA4Invoice(viewingSale);
-      PrintEngine.printA4(html);
+      const html = PrintEngine.generateA4Invoice(viewingSale, "HALF A4 TAX INVOICE", false);
+      PrintEngine.printA4Half(html);
     }
 
-    function downloadInvoiceA4Pdf() {
+    function downloadInvoiceA4HalfPdf() {
       if (!viewingSale) return;
-      const html = PrintEngine.generateA4Invoice(viewingSale);
-      PrintEngine.downloadAsPdf(html, `Salon_Vellora_Invoice_${viewingSale.invoice_number}.pdf`, false);
+      const html = PrintEngine.generateA4Invoice(viewingSale, "HALF A4 TAX INVOICE", false);
+      PrintEngine.downloadAsPdf(html, `Salon_Vellora_Invoice_${viewingSale.invoice_number}.pdf`, 'half-a4-landscape');
+    }
+
+    function printInvoiceDualA4() {
+      if (!viewingSale) return;
+      const html = PrintEngine.generateDualA4Invoice(viewingSale);
+      PrintEngine.printDualA4(html);
+    }
+
+    function downloadInvoiceDualA4Pdf() {
+      if (!viewingSale) return;
+      const html = PrintEngine.generateDualA4Invoice(viewingSale);
+      PrintEngine.downloadAsPdf(html, `Salon_Vellora_Dual_Invoice_${viewingSale.invoice_number}.pdf`, 'dual-a4');
     }
 
     function printInvoiceThermal() {
@@ -308,6 +347,26 @@
       if (!viewingSale) return;
       const html = PrintEngine.generateThermalReceipt(viewingSale);
       PrintEngine.downloadAsPdf(html, `Salon_Vellora_Receipt_${viewingSale.invoice_number}.pdf`, true);
+    }
+
+    function handleShareViewingInvoiceWhatsApp() {
+      if (!viewingSale) return;
+      WhatsAppShare.shareSaleReceipt(viewingSale);
+    }
+
+    async function shareInvoiceRowWhatsApp(id) {
+      try {
+        let sale = allSales.find(s => s.id === id);
+        if (!sale || !sale.items) {
+          const res = await api.get(`/sales/${id}`);
+          if (res && res.success && res.data) sale = res.data;
+        }
+        if (sale) {
+          WhatsAppShare.shareSaleReceipt(sale);
+        }
+      } catch (err) {
+        common.showToast("Could not share invoice on WhatsApp.", "error");
+      }
     }
 
     // Refund Logic

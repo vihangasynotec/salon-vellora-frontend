@@ -138,3 +138,12 @@ function downloadReportPdf() {
   const p = currentReportData.period || { start: "from", end: "to" };
   PrintEngine.downloadAsPdf(html, `Salon_Vellora_Executive_Report_${p.start}_${p.end}.pdf`, 'a4');
 }
+
+function shareReportWhatsApp() {
+  if (!currentReportData) {
+    common.showToast("No report data loaded to share on WhatsApp.", "warning");
+    return;
+  }
+  WhatsAppShare.shareExecutiveReport(currentReportData);
+}
+

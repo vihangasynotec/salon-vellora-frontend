@@ -156,7 +156,10 @@ function renderListView() {
         </select>
       </td>
       <td style="font-size:0.8rem;color:var(--text-muted);">${apt.notes || '-'}</td>
-      <td style="text-align:right;">
+      <td style="text-align:right; white-space:nowrap;">
+        <button class="btn-whatsapp-sm" onclick="shareAppointmentWhatsApp(${apt.id})" title="Share Confirmation via WhatsApp" style="margin-right:4px;">
+          <i data-lucide="message-circle" style="width:13px;height:13px;"></i>
+        </button>
         <button class="btn-soft-pink" style="padding:4px 8px;font-size:0.75rem;" onclick="deleteAppointment(${apt.id})" title="Cancel Booking">
           <i data-lucide="trash-2" style="width:14px;"></i>
         </button>
@@ -187,16 +190,23 @@ function renderDayScheduleView() {
 
     let chips = matched.map(apt => `
       <div class="appointment-chip">
-        <div>
+        <div style="flex:1;">
           <b>${apt.customer ? apt.customer.name : 'Client'}</b> (${apt.service ? apt.service.name : 'Service'})
           <div style="font-size:0.7rem;color:var(--text-muted);">${common.formatTime(apt.start_time)} - ${common.formatTime(apt.end_time)} | Stylist: ${apt.staff ? apt.staff.name : '-'}</div>
         </div>
-        <span class="badge-custom badge-${apt.status === 'Completed' ? 'success' : 'primary'}">${apt.status}</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="badge-custom badge-${apt.status === 'Completed' ? 'success' : 'primary'}">${apt.status}</span>
+          <button class="btn-whatsapp-sm" onclick="event.stopPropagation(); shareAppointmentWhatsApp(${apt.id})" title="Send WhatsApp Confirmation" style="padding:3px 6px;">
+            <i data-lucide="message-circle" style="width:12px;height:12px;"></i>
+          </button>
+        </div>
       </div>
     `).join("");
 
     return `<div class="time-slot-lane">${chips || '<span style="color:#d1d5db;font-size:0.75rem;">Available</span>'}</div>`;
   }).join("");
+
+  if (window.lucide) lucide.createIcons();
 }
 
 function openBookModal() {
@@ -245,15 +255,46 @@ async function handleBookAppointment(e) {
     const res = await api.post("/appointments", payload);
     if (res.success && res.data) {
       common.showToast("Appointment booked successfully!", "success");
+      const createdApt = res.data;
       closeBookModal();
       document.getElementById("cal-date-picker").value = aptDate;
-      loadAppointments();
+      await loadAppointments();
+
+      // Offer quick WhatsApp confirmation send
+      if (window.WhatsAppShare) {
+        const found = allAppointments.find(a => a.id === createdApt.id) || createdApt;
+        if (!found.customer) {
+          found.customer = allClients.find(c => c.id == customerId);
+        }
+        if (!found.staff) {
+          found.staff = allStylists.find(s => s.id == staffId);
+        }
+        if (!found.service && !found.package) {
+          const srv = allServicesAndPackages.find(i => (i.is_pkg ? 'pkg_' + i.id : 'srv_' + i.id) === itemVal);
+          if (srv && srv.is_pkg) found.package = srv;
+          else if (srv) found.service = srv;
+        }
+        window.WhatsAppShare.shareAppointmentConfirmation(found);
+      }
     }
   } catch (err) {
     common.showToast(err.message || "Failed to book appointment. Check for stylist schedule conflict.", "error");
   } finally {
     btn.disabled = false;
   }
+}
+
+function shareAppointmentWhatsApp(aptId) {
+  const apt = allAppointments.find(a => a.id === aptId);
+  if (!apt) {
+    common.showToast("Appointment details not found.", "error");
+    return;
+  }
+  if (!window.WhatsAppShare) {
+    common.showToast("WhatsApp module not available.", "error");
+    return;
+  }
+  window.WhatsAppShare.shareAppointmentConfirmation(apt);
 }
 
 async function updateAppointmentStatus(id, newStatus) {

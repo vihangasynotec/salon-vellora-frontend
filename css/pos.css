@@ -2,13 +2,27 @@
    SALON VELLORA — POS & BILLING STYLES (NEXT-LEVEL TOUCH TERMINAL)
    ========================================================================== */
 
+.pos-content-wrap {
+  padding: 0.75rem 1.25rem 0.85rem !important;
+  overflow: hidden !important;
+  height: calc(100vh - 68px) !important;
+  max-height: calc(100vh - 68px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
 .pos-layout {
   display: grid;
-  grid-template-columns: 1fr 430px;
-  gap: 1.25rem;
-  height: calc(100vh - 110px);
-  min-height: 580px;
-  margin-top: -0.5rem;
+  grid-template-columns: 1fr 400px;
+  gap: 1rem;
+  flex: 1;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
+  margin-top: 0;
+  box-sizing: border-box;
 }
 
 /* Left: Catalog / Selection Area */
@@ -19,51 +33,46 @@
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
-  padding: 1.15rem 1.25rem;
+  padding: 0.85rem 1rem 0.75rem;
   overflow: hidden;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .pos-search-bar {
   display: flex;
-  gap: 12px;
-  margin-bottom: 0.85rem;
+  gap: 10px;
+  margin-bottom: 0.7rem;
+  flex-shrink: 0;
 }
 
-/* Category Pills Bar with Luxury Slim Scrollbar */
+/* Category Pills Bar with Luxury Hidden Scrollbar */
 .pos-category-pills {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding: 4px 2px 8px;
-  margin-bottom: 0.9rem;
+  padding: 2px 2px 6px;
+  margin-bottom: 0.7rem;
   border-bottom: 1px solid var(--border-subtle);
-  scrollbar-width: thin;
-  scrollbar-color: #ebd4de transparent;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
   -webkit-overflow-scrolling: touch;
+  flex-shrink: 0;
 }
 
 .pos-category-pills::-webkit-scrollbar {
-  height: 5px;
-}
-.pos-category-pills::-webkit-scrollbar-track {
-  background: transparent;
-}
-.pos-category-pills::-webkit-scrollbar-thumb {
-  background: #ebd4de;
-  border-radius: 999px;
-}
-.pos-category-pills::-webkit-scrollbar-thumb:hover {
-  background: var(--primary);
+  display: none; /* Chrome, Safari, Edge */
 }
 
 .category-pill {
-  padding: 0.45rem 1.1rem;
+  padding: 0.4rem 0.95rem;
   border-radius: var(--radius-pill);
   background: #ffffff;
   border: 1px solid var(--border);
   color: #4b5563;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -71,7 +80,8 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.02);
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .category-pill:hover {
@@ -88,16 +98,19 @@
   box-shadow: 0 3px 10px rgba(201, 93, 126, 0.3);
 }
 
-/* POS Items Grid — FIXED HEIGHT CARDS, NO VERTICAL STRETCHING */
+/* POS Items Grid — RESPONSIVE AUTO-FIT WITH PROPER BREATHING ROOM */
 .pos-items-grid {
   flex: 1;
+  min-height: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  grid-auto-rows: 155px; /* FIXED card height: prevents stretching on few items */
-  align-content: start; /* CRITICAL: Aligns rows to top, stops 100% height expansion */
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  align-content: start;
+  gap: 0.75rem;
   overflow-y: auto;
-  padding: 8px 8px 1.5rem 8px; /* Buffer space prevents card hover transform & shadow clipping */
+  overflow-x: hidden;
+  padding: 2px 6px 1rem 2px;
+  scrollbar-width: thin;
+  scrollbar-color: #ebd4de transparent;
 }
 
 .pos-items-grid::-webkit-scrollbar {
@@ -116,11 +129,12 @@
 
 /* Luxury POS Item Card */
 .pos-item-card {
-  height: 155px;
+  min-height: 155px;
+  height: auto;
   background: #ffffff;
   border: 1.5px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 0.85rem 0.95rem 0.75rem;
+  padding: 0.75rem 0.85rem 0.65rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -138,7 +152,7 @@
   background: #fffbfa;
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(201, 93, 126, 0.16);
-  z-index: 5; /* Renders above siblings without clipping */
+  z-index: 5;
 }
 
 .pos-item-card:active {
@@ -151,42 +165,51 @@
   justify-content: space-between;
   align-items: center;
   gap: 6px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  width: 100%;
 }
 
 .pos-item-code {
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: var(--primary-dark);
   background: #fdf2f5;
-  padding: 1px 6px;
-  border-radius: 4px;
+  border: 1px solid #fce7ef;
+  padding: 2px 7px;
+  border-radius: 5px;
   letter-spacing: 0.3px;
+  white-space: nowrap !important;
+  flex-shrink: 0;
+  display: inline-block;
+  line-height: 1.2;
 }
 
 .pos-item-badge {
-  font-size: 0.66rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 2px 7px;
+  border-radius: 5px;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  white-space: nowrap;
+  gap: 4px;
+  white-space: nowrap !important;
+  flex-shrink: 0;
+  line-height: 1.2;
 }
 
 .pos-item-title {
-  font-size: 0.88rem;
+  font-size: 0.87rem;
   font-weight: 700;
   color: #111827;
-  line-height: 1.25;
+  line-height: 1.35;
   margin-top: 4px;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  word-break: break-word;
 }
 
 .pos-item-meta {
@@ -197,13 +220,29 @@
   text-overflow: ellipsis;
 }
 
+/* Luxury Rental Deposit Pill */
+.pos-rental-deposit-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-top: 5px;
+  white-space: nowrap;
+}
+
 .pos-item-bottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-top: 1px dashed var(--border);
-  padding-top: 6px;
-  margin-top: 4px;
+  padding-top: 8px;
+  margin-top: 8px;
 }
 
 .pos-item-price {
@@ -214,8 +253,8 @@
 }
 
 .pos-item-add-btn {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: #fff0f5;
   color: var(--primary);
@@ -224,6 +263,7 @@
   justify-content: center;
   transition: all 0.2s;
   border: 1px solid #fad3df;
+  flex-shrink: 0;
 }
 
 .pos-item-card:hover .pos-item-add-btn {
@@ -243,27 +283,33 @@
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .cart-header {
-  padding: 1.15rem 1.25rem;
+  padding: 0.85rem 1.15rem;
   border-bottom: 1px solid var(--border);
   background: #fffbfa;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .cart-customer-box {
-  padding: 0.85rem 1.25rem;
+  padding: 0.75rem 1.15rem;
   border-bottom: 1px solid var(--border-subtle);
   background: #faf7f8;
+  flex-shrink: 0;
 }
 
 .cart-items-list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 0.85rem 1.25rem;
+  padding: 0.75rem 1.15rem;
 }
 
 .cart-item-row {

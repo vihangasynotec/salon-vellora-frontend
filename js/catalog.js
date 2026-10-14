@@ -6,6 +6,7 @@
 let allCategories = [];
 let allPackages = [];
 let allServices = [];
+let allRentals = [];
 let activeFilter = 'all';
 let searchQuery = '';
 let currentModalItem = null;
@@ -31,6 +32,76 @@ const ITEM_IMAGE_MAP = {
   'SV-NL-02': 'https://images.unsplash.com/photo-1519415510236-718bdfcd89c8?w=800&q=80&auto=format&fit=crop', // Manicure & Pedicure Spa
 };
 
+// Fallback Luxury Bridal & Item Rentals
+const SAMPLE_CATALOG_RENTALS = [
+  {
+    id: 1,
+    name: 'Royal Kanchipuram Pure Silk Bridal Saree (Crimson & Gold)',
+    code: 'RNT-SAR-01',
+    category: 'Bridal Saree',
+    rental_price_per_day: 15000,
+    security_deposit: 25000,
+    available_qty: 3,
+    description: 'Pure Kanchipuram zari silk bridal saree with heavy gold brocade pallu. Cleaned and steam pressed in bridal wardrobe.',
+    image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&q=80&auto=format&fit=crop'
+  },
+  {
+    id: 2,
+    name: 'Traditional Kandyan Mul Anduma 7-Necklace Gold-Plated Set',
+    code: 'RNT-ACC-01',
+    category: 'Jewellery Set',
+    rental_price_per_day: 12000,
+    security_deposit: 30000,
+    available_qty: 2,
+    description: 'Authentic 7-strand bridal necklace set (Peti Malaya, Agasti Malaya, Kadu Malaya) with earrings and armlets for traditional Kandyan brides.',
+    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80&auto=format&fit=crop'
+  },
+  {
+    id: 3,
+    name: 'Austrian Crystal Royal Bridal Tiara & Crown',
+    code: 'RNT-ACC-02',
+    category: 'Headpiece',
+    rental_price_per_day: 4500,
+    security_deposit: 10000,
+    available_qty: 4,
+    description: 'Handcrafted Austrian crystal tiara with diamond-cut sparkles, tailored for Western bridal hairstyles.',
+    image: 'https://images.unsplash.com/photo-1546171753-97d7676e4602?w=800&q=80&auto=format&fit=crop'
+  },
+  {
+    id: 4,
+    name: 'Cathedral French Lace Bridal Veil (3.5 Meters)',
+    code: 'RNT-ACC-03',
+    category: 'Veil',
+    rental_price_per_day: 5000,
+    security_deposit: 12000,
+    available_qty: 3,
+    description: 'Extra-long 3.5m delicate French lace cathedral veil with soft illusion tulle and bridal comb.',
+    image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80&auto=format&fit=crop'
+  },
+  {
+    id: 5,
+    name: 'Kandyan Bridal Nalalpatiya (Forehead Ornament)',
+    code: 'RNT-ACC-04',
+    category: 'Jewellery Set',
+    rental_price_per_day: 6000,
+    security_deposit: 15000,
+    available_qty: 2,
+    description: 'Traditional gold-plated Nalalpatiya with red stone inlays and temple filigree work.',
+    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80&auto=format&fit=crop'
+  },
+  {
+    id: 6,
+    name: 'Designer Champagne Reception Evening Gown',
+    code: 'RNT-GWN-01',
+    category: 'Evening Gown',
+    rental_price_per_day: 18000,
+    security_deposit: 25000,
+    available_qty: 2,
+    description: 'Exquisite floor-length champagne sequin reception gown with corset back, ideal for bridal homecomings.',
+    image: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=800&q=80&auto=format&fit=crop'
+  }
+];
+
 // Fallback Images by Category
 const CATEGORY_FALLBACK_IMAGES = {
   'bridal-dressing': 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&q=80&auto=format&fit=crop',
@@ -39,12 +110,14 @@ const CATEGORY_FALLBACK_IMAGES = {
   'facial-skincare': 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=800&q=80&auto=format&fit=crop',
   'nails-spa': 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=800&q=80&auto=format&fit=crop',
   'makeup-beauty': 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=800&q=80&auto=format&fit=crop',
+  'rentals': 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&q=80&auto=format&fit=crop',
 };
 
 // Category Icon Mapping
 const CATEGORY_ICONS = {
   'all': 'sparkles',
   'packages': 'crown',
+  'rentals': 'gem',
   'bridal-dressing': 'gem',
   'hair-care': 'scissors',
   'hair-treatments': 'wand-2',
@@ -108,6 +181,7 @@ async function loadCatalog() {
       const data = res.data;
       allCategories = data.categories || [];
       allPackages = data.packages || [];
+      allRentals = (data.rentals && data.rentals.length) ? data.rentals : SAMPLE_CATALOG_RENTALS;
       
       // Flatten all services with category metadata
       allServices = [];
@@ -129,8 +203,10 @@ async function loadCatalog() {
       showCatalogError('Failed to load catalog data.');
     }
   } catch (err) {
-    console.error('Failed to load catalog:', err);
-    showCatalogError('Could not connect to Salon Vellora server. Please ensure the backend is running.');
+    console.warn('Backend offline, using sample luxury catalog & rentals:', err);
+    allRentals = SAMPLE_CATALOG_RENTALS;
+    renderCategoryPills();
+    renderCatalog();
   }
 }
 
@@ -164,6 +240,9 @@ function renderCategoryPills() {
     </button>
     <button class="category-pill ${activeFilter === 'packages' ? 'active' : ''}" onclick="filterCatalog('packages', this)">
       <i data-lucide="crown" style="width:14px;height:14px;"></i> Signature Packages
+    </button>
+    <button class="category-pill ${activeFilter === 'rentals' ? 'active' : ''}" onclick="filterCatalog('rentals', this)">
+      <i data-lucide="gem" style="width:14px;height:14px;color:#d946ef;"></i> 24h Bridal Rentals
     </button>
   `;
 
@@ -200,6 +279,9 @@ function filterCatalog(filterKey, btnEl) {
   if (filterKey === 'packages') {
     const pkgSec = document.getElementById('packages-section');
     if (pkgSec) pkgSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else if (filterKey === 'rentals') {
+    const rntSec = document.getElementById('rentals-section');
+    if (rntSec) rntSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } else if (filterKey !== 'all') {
     const srvSec = document.getElementById('services-section');
     if (srvSec) srvSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -292,7 +374,7 @@ function renderCatalog() {
 
   // Render Services Section
   if (srvSection && srvGrid) {
-    if (activeFilter === 'packages') {
+    if (activeFilter === 'packages' || activeFilter === 'rentals') {
       srvSection.style.display = 'none';
     } else {
       srvSection.style.display = 'block';
@@ -317,9 +399,93 @@ function renderCatalog() {
     }
   }
 
+  // 3. Filter & Render 24h Bridal Rentals Section
+  const rntSection = document.getElementById('rentals-section');
+  const rntGrid = document.getElementById('rentals-grid');
+  const rntCountLabel = document.getElementById('rentals-count-label');
+
+  let filteredRentals = allRentals.filter(rnt => {
+    if (activeFilter !== 'all' && activeFilter !== 'rentals') return false;
+    if (!query) return true;
+    const nameMatch = (rnt.name || '').toLowerCase().includes(query);
+    const catMatch = (rnt.category || '').toLowerCase().includes(query);
+    const codeMatch = (rnt.code || '').toLowerCase().includes(query);
+    const descMatch = (rnt.description || '').toLowerCase().includes(query);
+    return nameMatch || catMatch || codeMatch || descMatch;
+  });
+
+  if (rntSection && rntGrid) {
+    if (activeFilter !== 'all' && activeFilter !== 'rentals') {
+      rntSection.style.display = 'none';
+    } else {
+      rntSection.style.display = 'block';
+      if (rntCountLabel) {
+        rntCountLabel.textContent = `Showing ${filteredRentals.length} Luxury Rental Items (Standard 24h Duration)`;
+      }
+
+      if (filteredRentals.length === 0) {
+        rntGrid.innerHTML = `
+          <div style="grid-column:1/-1; text-align:center; padding:2.5rem; background:#ffffff; border-radius:16px; border:1px solid var(--border); color:var(--text-muted);">
+            <i data-lucide="gem" style="width:32px;height:32px;margin-bottom:8px;color:var(--text-light);"></i>
+            <p style="margin:0;">No bridal rental items matching "${escapeHtml(query)}".</p>
+          </div>`;
+      } else {
+        rntGrid.innerHTML = filteredRentals.map(rnt => renderRentalCardWithImage(rnt)).join('');
+      }
+    }
+  }
+
   if (window.lucide) {
     lucide.createIcons();
   }
+}
+
+/**
+ * Render luxury rental item card for public catalog
+ */
+function renderRentalCardWithImage(rnt) {
+  const imgUrl = rnt.image || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&q=80&auto=format&fit=crop';
+  const price = parseFloat(rnt.rental_price_per_day) || 0;
+  const deposit = parseFloat(rnt.security_deposit) || 0;
+
+  return `
+    <div class="luxury-catalog-card treatment-card" onclick="openCardDetailModal('rental', ${rnt.id})">
+      <div class="card-media-wrapper treatment-card-media">
+        <img src="${imgUrl}" alt="${escapeHtml(rnt.name)}" class="card-img" loading="lazy">
+        <div class="card-media-scrim"></div>
+        <div class="card-floating-tags">
+          <span class="tag-category-pill" style="background:#fdf2f8; color:#be185d;">
+            <i data-lucide="gem" style="width:11px;height:11px;"></i> ${escapeHtml(rnt.category || 'Rental')}
+          </span>
+          <span class="tag-duration-chip" style="background:rgba(217, 70, 239, 0.88);">
+            <i data-lucide="clock" style="width:11px;height:11px;"></i> 24h Period
+          </span>
+        </div>
+        <span class="card-code-float">${escapeHtml(rnt.code || 'RNT')}</span>
+        <span class="card-tap-hint">Rent details <i data-lucide="chevron-right" style="width:13px;height:13px;"></i></span>
+      </div>
+
+      <div class="card-body-content">
+        <h3 class="card-item-title">${escapeHtml(rnt.name)}</h3>
+        <p class="card-item-desc">${escapeHtml(rnt.description || 'Pristine luxury bridal wardrobe rental with 24-hour return policy & security deposit clearance.')}</p>
+      </div>
+
+      <div class="card-bottom-strip">
+        <div class="price-box-wrap">
+          <div class="price-sub-label">Rental Rate / 24h</div>
+          <div class="final-bold-price">${formatCatalogCurrency(price)}</div>
+          <div style="font-size:0.7rem; color:var(--text-muted); font-weight:600; margin-top:2px;">
+            Deposit: ${formatCatalogCurrency(deposit)}
+          </div>
+        </div>
+
+        <button type="button" class="btn-view-card-detail" onclick="event.stopPropagation(); openCardDetailModal('rental', ${rnt.id})">
+          <span>Rent</span>
+          <i data-lucide="arrow-right" style="width:14px;height:14px;"></i>
+        </button>
+      </div>
+    </div>
+  `;
 }
 
 /**
@@ -532,6 +698,7 @@ function openCardDetailModal(type, id) {
     item = allPackages.find(p => p.id === id);
     if (item) {
       item._isPackage = true;
+      item._isRental = false;
       const orig = parseFloat(item.original_total) || 0;
       const pkgPrice = parseFloat(item.package_price || item.price) || 0;
       item._displayPrice = pkgPrice;
@@ -542,10 +709,27 @@ function openCardDetailModal(type, id) {
       item._categoryName = 'Signature Bridal Atelier';
       item._imageUrl = getItemImage(item, 'package');
     }
+  } else if (type === 'rental') {
+    item = allRentals.find(r => r.id === id);
+    if (item) {
+      item._isPackage = false;
+      item._isRental = true;
+      const price = parseFloat(item.rental_price_per_day) || 0;
+      const deposit = parseFloat(item.security_deposit) || 0;
+      item._displayPrice = price;
+      item._deposit = deposit;
+      item._originalPrice = 0;
+      item._discount = 0;
+      item._durationText = 'Standard 24-Hour Period';
+      item._code = item.code || 'RNT-ITEM';
+      item._categoryName = `Bridal & Item Rental (${item.category || 'Wardrobe'})`;
+      item._imageUrl = item.image || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&q=80&auto=format&fit=crop';
+    }
   } else {
     item = allServices.find(s => s.id === id);
     if (item) {
       item._isPackage = false;
+      item._isRental = false;
       const regular = parseFloat(item.price) || 0;
       const disc = parseFloat(item.discount) || 0;
       item._displayPrice = disc > 0 ? (regular - disc) : regular;
@@ -571,21 +755,32 @@ function openCardDetailModal(type, id) {
   document.getElementById('modal-duration-tag').innerHTML = `<i data-lucide="clock" style="width:12px;height:12px;"></i> ${item._durationText}`;
 
   // Populate Specs Strip
-  document.getElementById('modal-price-val').textContent = formatCatalogCurrency(item._displayPrice);
+  document.getElementById('modal-price-val').textContent = formatCatalogCurrency(item._displayPrice) + (item._isRental ? ' / 24h' : '');
   document.getElementById('modal-duration-val').textContent = item._durationText;
 
   const savingsPill = document.getElementById('modal-savings-pill');
-  if (item._discount > 0) {
+  if (item._isRental) {
     savingsPill.style.display = 'inline-block';
+    savingsPill.style.background = '#fdf2f8';
+    savingsPill.style.color = '#be185d';
+    savingsPill.textContent = `Security Deposit: ${formatCatalogCurrency(item._deposit)}`;
+  } else if (item._discount > 0) {
+    savingsPill.style.display = 'inline-block';
+    savingsPill.style.background = '#ecfdf5';
+    savingsPill.style.color = '#059669';
     savingsPill.textContent = `Save ${formatCatalogCurrency(item._discount)}`;
   } else {
     savingsPill.style.display = 'none';
   }
 
   // Populate Detailed Description
-  document.getElementById('modal-long-desc').textContent = item.description || 'Exclusive luxury beauty treatment at Salon Vellora. Executed with premium authentic cosmetics, certified senior stylists, and high standards of cleanliness.';
+  let desc = item.description || 'Exclusive luxury beauty treatment at Salon Vellora. Executed with premium authentic cosmetics, certified senior stylists, and high standards of cleanliness.';
+  if (item._isRental) {
+    desc += ` Standard 24-hour rental duration applies. Security deposit of ${formatCatalogCurrency(item._deposit)} is required at pickup and fully refunded upon return inspection.`;
+  }
+  document.getElementById('modal-long-desc').textContent = desc;
 
-  // Inclusions Section (For Packages) vs Highlights (For Services)
+  // Inclusions Section (For Packages) vs Highlights (For Services/Rentals)
   const inclusionsSec = document.getElementById('modal-inclusions-section');
   const inclusionsList = document.getElementById('modal-inclusions-list');
   const countSpan = document.getElementById('modal-inclusions-count');
@@ -651,15 +846,29 @@ function submitDetailWhatsApp() {
   if (clientName) {
     message += ` my name is ${clientName}.`;
   }
-  message += ` I would like to book the "${currentModalItem.name}" (${formatCatalogCurrency(currentModalItem._displayPrice)}).`;
 
-  if (prefDate) {
-    message += `\n📅 Preferred Date: ${prefDate}`;
+  if (currentModalItem._isRental) {
+    message += ` I would like to inquire about reserving a 24-hour rental item:`;
+    message += `\n✨ *${currentModalItem.name}* (${currentModalItem._code})`;
+    message += `\n💰 24h Rental Rate: ${formatCatalogCurrency(currentModalItem._displayPrice)}`;
+    message += `\n🛡️ Refundable Deposit: ${formatCatalogCurrency(currentModalItem._deposit)}`;
+    if (prefDate) {
+      message += `\n📅 Event / Pickup Date: ${prefDate}`;
+    }
+    if (prefTime) {
+      message += `\n⏰ Preferred Pickup Time: ${prefTime}`;
+    }
+    message += `\n\nCould you please confirm availability for my date? Thank you!`;
+  } else {
+    message += ` I would like to book the "${currentModalItem.name}" (${formatCatalogCurrency(currentModalItem._displayPrice)}).`;
+    if (prefDate) {
+      message += `\n📅 Preferred Date: ${prefDate}`;
+    }
+    if (prefTime) {
+      message += `\n⏰ Time Slot: ${prefTime}`;
+    }
+    message += `\n\nCould you please confirm appointment availability? Thank you!`;
   }
-  if (prefTime) {
-    message += `\n⏰ Time Slot: ${prefTime}`;
-  }
-  message += `\n\nCould you please confirm appointment availability? Thank you!`;
 
   const url = `https://wa.me/94740844739?text=${encodeURIComponent(message)}`;
   window.open(url, '_blank');

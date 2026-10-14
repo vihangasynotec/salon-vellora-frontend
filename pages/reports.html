@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -32,6 +32,9 @@
           </div>
 
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn-whatsapp" onclick="shareReportWhatsApp()">
+              <i data-lucide="message-circle"></i> Share on WhatsApp
+            </button>
             <button class="btn-secondary-custom" onclick="exportReportCSV()" data-permission="reports.export">
               <i data-lucide="file-spreadsheet"></i> Export CSV
             </button>
@@ -151,6 +154,7 @@
   <script src="../js/common.js"></script>
   <script src="../js/html2pdf.bundle.min.js"></script>
   <script src="../js/print-engine.js"></script>
+  <script src="../js/whatsapp-share.js"></script>
   <script src="../js/reports.js"></script>
 </body>
 </html>

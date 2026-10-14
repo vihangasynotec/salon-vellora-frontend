@@ -6,6 +6,7 @@
 let allServices = [];
 let allPackages = [];
 let allProducts = [];
+let allRentals = [];
 let allCustomers = [];
 let allStaff = [];
 
@@ -42,26 +43,41 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function loadPosCatalog() {
   try {
     const res = await api.get("/pos/catalog");
-    if (!res.success || !res.data) return;
+    if (res && res.success && res.data) {
+      allServices = [];
+      (res.data.categories || []).forEach(cat => {
+        if (cat.services) {
+          cat.services.forEach(s => allServices.push({ ...s, category_name: cat.name }));
+        }
+      });
 
-    allServices = [];
-    res.data.categories.forEach(cat => {
-      if (cat.services) {
-        cat.services.forEach(s => allServices.push({ ...s, category_name: cat.name }));
+      allPackages = res.data.packages || [];
+      allProducts = res.data.products || [];
+      allRentals = res.data.rentals || [];
+      allCustomers = res.data.customers || [];
+    }
+
+    // Fallback rentals from localStorage or defaults if empty
+    if (allRentals.length === 0) {
+      const storedRentals = localStorage.getItem("salon_rental_catalog");
+      if (storedRentals) {
+        allRentals = JSON.parse(storedRentals);
       }
-    });
+    }
 
-    allPackages = res.data.packages || [];
-    allProducts = res.data.products || [];
-    allCustomers = res.data.customers || [];
-
-    renderCategoryPills(res.data.categories);
+    renderCategoryPills(res?.data?.categories || []);
     populateCustomerDropdown(allCustomers);
     renderPosItems(getAllCatalogItems());
 
   } catch (err) {
     console.error("POS Catalog Load Error:", err);
-    common.showToast("Failed to load POS catalog.", "error");
+    // Offline fallback for rentals
+    const storedRentals = localStorage.getItem("salon_rental_catalog");
+    if (storedRentals) {
+      allRentals = JSON.parse(storedRentals);
+      renderPosItems(getAllCatalogItems());
+    }
+    common.showToast("Catalog loaded with offline cache.", "info");
   }
 }
 
@@ -81,6 +97,7 @@ function getAllCatalogItems() {
   allServices.forEach(s => items.push({ ...s, type: 'service', display_price: s.price }));
   allPackages.forEach(p => items.push({ ...p, type: 'package', display_price: p.package_price }));
   allProducts.forEach(pr => items.push({ ...pr, type: 'product', display_price: pr.retail_price }));
+  allRentals.forEach(r => items.push({ ...r, type: 'rental', display_price: r.rental_price_per_24h, deposit: r.security_deposit }));
   return items;
 }
 
@@ -107,6 +124,9 @@ function renderCategoryPills(categories) {
     </button>
     <button class="category-pill" onclick="selectCategory('packages', this)">
       <i data-lucide="crown" style="width:13px;height:13px;"></i> Bridal Packages
+    </button>
+    <button class="category-pill" onclick="selectCategory('rentals', this)">
+      <i data-lucide="gem" style="width:13px;height:13px;"></i> Bridal Rentals (24h)
     </button>
     <button class="category-pill" onclick="selectCategory('products', this)">
       <i data-lucide="package" style="width:13px;height:13px;"></i> Retail Products
@@ -151,6 +171,8 @@ function filterPosItems() {
     items = items.filter(i => i.type === 'package');
   } else if (activeCategoryFilter === 'products') {
     items = items.filter(i => i.type === 'product');
+  } else if (activeCategoryFilter === 'rentals') {
+    items = items.filter(i => i.type === 'rental');
   } else if (activeCategoryFilter.startsWith('cat_')) {
     const catId = parseInt(activeCategoryFilter.replace('cat_', ''));
     items = items.filter(i => i.type === 'service' && i.category_id === catId);
@@ -161,7 +183,8 @@ function filterPosItems() {
       i.name.toLowerCase().includes(query) ||
       (i.code && i.code.toLowerCase().includes(query)) ||
       (i.barcode && i.barcode.toLowerCase().includes(query)) ||
-      (i.sku && i.sku.toLowerCase().includes(query))
+      (i.sku && i.sku.toLowerCase().includes(query)) ||
+      (i.category && i.category.toLowerCase().includes(query))
     );
   }
 
@@ -190,12 +213,16 @@ function renderPosItems(items) {
     } else if (item.type === 'product') {
       const isLow = item.stock_quantity <= item.alert_quantity;
       badge = `<span class="pos-item-badge ${isLow ? 'badge-danger' : 'badge-success'}">${item.stock_quantity} in stock</span>`;
+    } else if (item.type === 'rental') {
+      const avail = (item.available_quantity !== undefined && item.available_quantity !== null) ? item.available_quantity : 1;
+      const isAvail = avail > 0;
+      badge = `<span class="pos-item-badge ${isAvail ? 'badge-rental' : 'badge-danger'}"><i data-lucide="gem" style="width:10px;height:10px;"></i> 24h • ${avail} left</span>`;
     }
 
     const code = item.code || (item.type === 'product' ? (item.sku || 'PROD') : 'SV');
 
     return `
-      <div class="pos-item-card" onclick="addItemToCart('${item.type}', ${item.id})">
+      <div class="pos-item-card ${item.type === 'rental' ? 'rental' : ''}" onclick="addItemToCart('${item.type}', ${item.id})">
         <div>
           <div class="pos-item-top">
             <span class="pos-item-code">${escapeHtml(code)}</span>
@@ -203,8 +230,13 @@ function renderPosItems(items) {
           </div>
           <div class="pos-item-title" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
           <div class="pos-item-meta">
-            ${item.type === 'product' ? (item.brand ? escapeHtml(item.brand.name) : 'Product') : escapeHtml(item.category_name || 'Salon Treatment')}
+            ${item.type === 'product' ? (item.brand ? escapeHtml(item.brand.name) : 'Product') : (item.type === 'rental' ? escapeHtml(item.category || 'Bridal Rental') : escapeHtml(item.category_name || 'Salon Treatment'))}
           </div>
+          ${item.type === 'rental' ? `
+            <div class="pos-rental-deposit-pill" title="Security Deposit Refundable Upon Return">
+              <i data-lucide="shield" style="width:10px;height:10px;"></i>
+              <span>Deposit: ${common.formatCurrency(item.security_deposit || 0)}</span>
+            </div>` : ''}
         </div>
         <div class="pos-item-bottom">
           <div class="pos-item-price">${common.formatCurrency(item.display_price)}</div>
@@ -253,6 +285,7 @@ function addItemToCart(type, id) {
   if (type === 'service') sourceItem = allServices.find(s => s.id === id);
   if (type === 'package') sourceItem = allPackages.find(p => p.id === id);
   if (type === 'product') sourceItem = allProducts.find(pr => pr.id === id);
+  if (type === 'rental') sourceItem = allRentals.find(r => r.id === id);
 
   if (!sourceItem) return;
 
@@ -266,6 +299,17 @@ function addItemToCart(type, id) {
     }
   }
 
+  // Stock check for rentals
+  if (type === 'rental') {
+    const existingInCart = currentCart.items.find(i => i.item_type === 'rental' && i.item_id === id);
+    const requestedQty = (existingInCart ? existingInCart.quantity : 0) + 1;
+    const available = sourceItem.available_quantity !== undefined ? sourceItem.available_quantity : 1;
+    if (available < requestedQty) {
+      common.showToast(`Rental item '${sourceItem.name}' is currently rented out or unavailable.`, "warning");
+      return;
+    }
+  }
+
   const existingIndex = currentCart.items.findIndex(i => i.item_type === type && i.item_id === id);
   if (existingIndex > -1) {
     currentCart.items[existingIndex].quantity += 1;
@@ -274,7 +318,9 @@ function addItemToCart(type, id) {
       item_type: type,
       item_id: id,
       name: sourceItem.name,
-      unit_price: parseFloat(sourceItem.display_price || sourceItem.price || sourceItem.package_price || sourceItem.retail_price),
+      unit_price: parseFloat(sourceItem.display_price || sourceItem.price || sourceItem.package_price || sourceItem.retail_price || sourceItem.rental_price_per_24h),
+      deposit_amount: parseFloat(sourceItem.security_deposit || 0),
+      duration_hours: 24,
       quantity: 1,
       staff_id: null,
       discount_amount: 0,
@@ -300,6 +346,15 @@ function updateItemQuantity(index, delta) {
     const prod = allProducts.find(p => p.id === item.item_id);
     if (prod && prod.stock_quantity < newQty) {
       common.showToast(`Cannot add more. Stock limit reached (${prod.stock_quantity} units).`, "warning");
+      return;
+    }
+  }
+
+  // Stock check if rental
+  if (item.item_type === 'rental' && delta > 0) {
+    const rentItem = allRentals.find(r => r.id === item.item_id);
+    if (rentItem && (rentItem.available_quantity !== undefined) && rentItem.available_quantity < newQty) {
+      common.showToast(`Cannot add more. Rental stock limit reached (${rentItem.available_quantity} available).`, "warning");
       return;
     }
   }
@@ -344,7 +399,7 @@ function renderCartItems() {
     container.innerHTML = `
       <div style="text-align:center; padding: 4rem 1rem; color: var(--text-muted);">
         <i data-lucide="shopping-cart" style="width:40px;height:40px;color:var(--border);margin-bottom:8px;"></i>
-        <p style="font-size:0.85rem;">Cart is empty.<br>Tap any service or product to add.</p>
+        <p style="font-size:0.85rem;">Cart is empty.<br>Tap any service, package or rental item to add.</p>
       </div>
     `;
     if (window.lucide) lucide.createIcons();
@@ -367,7 +422,13 @@ function renderCartItems() {
     return `
       <div class="cart-item-row">
         <div class="cart-item-top">
-          <div class="cart-item-title">${item.name}</div>
+          <div>
+            <div class="cart-item-title">${item.name}</div>
+            ${item.item_type === 'rental' ? `
+              <div style="font-size:0.72rem; color:#c2410c; font-weight:700; margin-top:2px; display:flex; align-items:center; gap:4px;">
+                <i data-lucide="gem" style="width:11px;height:11px;"></i> 24h Rental &bull; Deposit: ${common.formatCurrency(item.deposit_amount || 0)}
+              </div>` : ''}
+          </div>
           <div class="cart-item-del" onclick="removeItemFromCart(${idx})">
             <i data-lucide="x" style="width:16px;height:16px;"></i>
           </div>
@@ -697,16 +758,24 @@ function showReceiptModal(sale) {
 
 function switchReceiptTab(format) {
   currentReceiptFormat = format;
+  const btnA4Half = document.getElementById("tab-btn-a4-half");
+  const btnA4Dual = document.getElementById("tab-btn-a4-dual");
   const btnThermal = document.getElementById("tab-btn-thermal");
-  const btnA4 = document.getElementById("tab-btn-a4");
 
-  if (format === 'thermal') {
-    btnThermal.classList.add("active");
-    btnA4.classList.remove("active");
-  } else {
-    btnA4.classList.add("active");
-    btnThermal.classList.remove("active");
-  }
+  const tabs = [
+    { btn: btnA4Half, id: 'a4-half' },
+    { btn: btnA4Dual, id: 'a4-dual' },
+    { btn: btnThermal, id: 'thermal' }
+  ];
+
+  tabs.forEach(t => {
+    if (!t.btn) return;
+    if (t.id === format) {
+      t.btn.classList.add("active");
+    } else {
+      t.btn.classList.remove("active");
+    }
+  });
 
   renderReceiptPreview();
 }
@@ -719,6 +788,9 @@ function renderReceiptPreview() {
   if (currentReceiptFormat === 'thermal') {
     container.innerHTML = PrintEngine.generateThermalReceipt(lastCompletedSale);
     actionsContainer.innerHTML = `
+      <button class="btn-whatsapp" onclick="handleShareReceiptWhatsApp()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px;">
+        <i data-lucide="message-circle" style="width:16px; height:16px;"></i> Share on WhatsApp
+      </button>
       <button class="btn-secondary-custom" onclick="handleDownloadReceiptPdf()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px;">
         <i data-lucide="download" style="width:16px; height:16px;"></i> Download Receipt (PDF)
       </button>
@@ -726,19 +798,41 @@ function renderReceiptPreview() {
         <i data-lucide="printer" style="width:16px; height:16px;"></i> Print 80mm Receipt
       </button>
     `;
-  } else {
-    container.innerHTML = PrintEngine.generateA4Invoice(lastCompletedSale);
+  } else if (currentReceiptFormat === 'a4-dual') {
+    container.innerHTML = PrintEngine.generateDualA4Invoice(lastCompletedSale);
     actionsContainer.innerHTML = `
+      <button class="btn-whatsapp" onclick="handleShareReceiptWhatsApp()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px;">
+        <i data-lucide="message-circle" style="width:16px; height:16px;"></i> Share on WhatsApp
+      </button>
+      <button class="btn-secondary-custom" onclick="handleDownloadDualA4Pdf()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px;">
+        <i data-lucide="download" style="width:16px; height:16px;"></i> Download 2-in-1 A4 (PDF)
+      </button>
+      <button class="btn-primary-custom" onclick="handlePrintDualA4()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(201,93,126,0.35);">
+        <i data-lucide="printer" style="width:16px; height:16px;"></i> Print 2 Receipts on 1 A4
+      </button>
+    `;
+  } else {
+    // Default: Half-A4 (Landscape)
+    container.innerHTML = PrintEngine.generateA4Invoice(lastCompletedSale, "HALF A4 TAX INVOICE", false);
+    actionsContainer.innerHTML = `
+      <button class="btn-whatsapp" onclick="handleShareReceiptWhatsApp()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px;">
+        <i data-lucide="message-circle" style="width:16px; height:16px;"></i> Share on WhatsApp
+      </button>
       <button class="btn-secondary-custom" onclick="handleDownloadA4Pdf()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px;">
         <i data-lucide="download" style="width:16px; height:16px;"></i> Download Half A4 (PDF)
       </button>
       <button class="btn-primary-custom" onclick="handlePrintA4()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(201,93,126,0.35);">
-        <i data-lucide="printer" style="width:16px; height:16px;"></i> Print Half A4 Invoice
+        <i data-lucide="printer" style="width:16px; height:16px;"></i> Print Half A4 (Landscape)
       </button>
     `;
   }
 
   if (window.lucide) lucide.createIcons();
+}
+
+function handleShareReceiptWhatsApp() {
+  if (!lastCompletedSale) return;
+  WhatsAppShare.shareSaleReceipt(lastCompletedSale);
 }
 
 function handlePrintReceipt() {
@@ -757,16 +851,26 @@ function handleDownloadReceiptPdf() {
 
 function handlePrintA4() {
   if (!lastCompletedSale) return;
-  const container = document.getElementById("receipt-print-area");
-  const target = (container && container.firstElementChild) ? container.firstElementChild : PrintEngine.generateA4Invoice(lastCompletedSale);
-  PrintEngine.printA4(target);
+  const html = PrintEngine.generateA4Invoice(lastCompletedSale, "HALF A4 TAX INVOICE", false);
+  PrintEngine.printA4Half(html);
 }
 
 function handleDownloadA4Pdf() {
   if (!lastCompletedSale) return;
-  const container = document.getElementById("receipt-print-area");
-  const target = (container && container.firstElementChild) ? container.firstElementChild : PrintEngine.generateA4Invoice(lastCompletedSale);
-  PrintEngine.downloadAsPdf(target, `Salon_Vellora_Invoice_${lastCompletedSale.invoice_number}.pdf`, false);
+  const html = PrintEngine.generateA4Invoice(lastCompletedSale, "HALF A4 TAX INVOICE", false);
+  PrintEngine.downloadAsPdf(html, `Salon_Vellora_Invoice_${lastCompletedSale.invoice_number}.pdf`, 'half-a4-landscape');
+}
+
+function handlePrintDualA4() {
+  if (!lastCompletedSale) return;
+  const html = PrintEngine.generateDualA4Invoice(lastCompletedSale);
+  PrintEngine.printDualA4(html);
+}
+
+function handleDownloadDualA4Pdf() {
+  if (!lastCompletedSale) return;
+  const html = PrintEngine.generateDualA4Invoice(lastCompletedSale);
+  PrintEngine.downloadAsPdf(html, `Salon_Vellora_Dual_Invoice_${lastCompletedSale.invoice_number}.pdf`, 'dual-a4');
 }
 
 function closeReceiptModal() {

@@ -21,7 +21,7 @@
       <!-- Topbar Placeholder -->
       <div id="app-topbar-placeholder"></div>
 
-      <div class="app-content" style="padding: 0.85rem 1.25rem; overflow: hidden;">
+      <div class="app-content pos-content-wrap">
         <div class="pos-layout">
           <!-- Left: Items Catalog -->
           <div class="pos-catalog-area">
@@ -38,10 +38,11 @@
 
             <!-- Categories Tabs -->
             <div class="pos-category-pills" id="pos-category-container">
-              <button class="category-pill active" onclick="selectCategory('all', this)">All Items</button>
-              <button class="category-pill" onclick="selectCategory('services', this)">All Services</button>
-              <button class="category-pill" onclick="selectCategory('packages', this)">Bridal Packages</button>
-              <button class="category-pill" onclick="selectCategory('products', this)">Retail Products</button>
+              <button class="category-pill active" onclick="selectCategory('all', this)"><i data-lucide="sparkles" style="width:13px;height:13px;"></i> All Items</button>
+              <button class="category-pill" onclick="selectCategory('services', this)"><i data-lucide="scissors" style="width:13px;height:13px;"></i> All Services</button>
+              <button class="category-pill" onclick="selectCategory('packages', this)"><i data-lucide="crown" style="width:13px;height:13px;"></i> Bridal Packages</button>
+              <button class="category-pill" onclick="selectCategory('rentals', this)"><i data-lucide="gem" style="width:13px;height:13px;"></i> Bridal Rentals (24h)</button>
+              <button class="category-pill" onclick="selectCategory('products', this)"><i data-lucide="package" style="width:13px;height:13px;"></i> Retail Products</button>
             </div>
 
             <!-- Items Grid -->
@@ -283,14 +284,18 @@
       </div>
 
       <!-- Format Switcher Tabs -->
-      <div class="no-print receipt-tab-bar">
+      <div class="no-print receipt-tab-bar" style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button id="tab-btn-a4-half" class="receipt-tab-pill" onclick="switchReceiptTab('a4-half')">
+          <i data-lucide="file-text" style="width:16px; height:16px;"></i>
+          <span>Half A4 (Landscape)</span>
+        </button>
+        <button id="tab-btn-a4-dual" class="receipt-tab-pill" onclick="switchReceiptTab('a4-dual')">
+          <i data-lucide="copy" style="width:16px; height:16px;"></i>
+          <span>2 Receipts on 1 A4</span>
+        </button>
         <button id="tab-btn-thermal" class="receipt-tab-pill active" onclick="switchReceiptTab('thermal')">
           <i data-lucide="receipt" style="width:16px; height:16px;"></i>
-          <span>80mm Thermal Receipt (POS)</span>
-        </button>
-        <button id="tab-btn-a4" class="receipt-tab-pill" onclick="switchReceiptTab('a4')">
-          <i data-lucide="file-text" style="width:16px; height:16px;"></i>
-          <span>Half A4 (A5) Tax Invoice</span>
+          <span>80mm Thermal (POS)</span>
         </button>
       </div>
 
@@ -380,6 +385,7 @@
   <script src="../js/common.js"></script>
   <script src="../js/html2pdf.bundle.min.js"></script>
   <script src="../js/print-engine.js"></script>
+  <script src="../js/whatsapp-share.js"></script>
   <script src="../js/pos.js"></script>
 </body>
 </html>
