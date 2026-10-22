@@ -55,13 +55,21 @@ async function loadPosCatalog() {
       allProducts = res.data.products || [];
       allRentals = res.data.rentals || [];
       allCustomers = res.data.customers || [];
+
+      try {
+        localStorage.setItem("salon_pos_catalog", JSON.stringify(res.data));
+      } catch (storageErr) {
+        console.warn("Could not cache catalog to localStorage:", storageErr);
+      }
     }
 
-    // Fallback rentals from localStorage or defaults if empty
+    // Fallback rentals from localStorage if empty
     if (allRentals.length === 0) {
       const storedRentals = localStorage.getItem("salon_rental_catalog");
       if (storedRentals) {
-        allRentals = JSON.parse(storedRentals);
+        try {
+          allRentals = JSON.parse(storedRentals);
+        } catch (e) {}
       }
     }
 
@@ -71,13 +79,59 @@ async function loadPosCatalog() {
 
   } catch (err) {
     console.error("POS Catalog Load Error:", err);
-    // Offline fallback for rentals
+    // Offline fallback for entire catalog
+    const cachedCatalogStr = localStorage.getItem("salon_pos_catalog");
+    if (cachedCatalogStr) {
+      try {
+        const cached = JSON.parse(cachedCatalogStr);
+        allServices = [];
+        (cached.categories || []).forEach(cat => {
+          if (cat.services) {
+            cat.services.forEach(s => allServices.push({ ...s, category_name: cat.name }));
+          }
+        });
+        allPackages = cached.packages || [];
+        allProducts = cached.products || [];
+        allRentals = cached.rentals || [];
+        allCustomers = cached.customers || [];
+
+        renderCategoryPills(cached.categories || []);
+        populateCustomerDropdown(allCustomers);
+        renderPosItems(getAllCatalogItems());
+        common.showToast("Catalog loaded from offline cache.", "info");
+        return;
+      } catch (cacheErr) {
+        console.warn("Could not parse offline catalog:", cacheErr);
+      }
+    }
+
+    // Offline fallback for rentals if available
     const storedRentals = localStorage.getItem("salon_rental_catalog");
     if (storedRentals) {
-      allRentals = JSON.parse(storedRentals);
-      renderPosItems(getAllCatalogItems());
+      try {
+        allRentals = JSON.parse(storedRentals);
+        if (allRentals.length > 0) {
+          renderPosItems(getAllCatalogItems());
+          common.showToast("Rental catalog loaded with offline cache.", "info");
+          return;
+        }
+      } catch (e) {}
     }
-    common.showToast("Catalog loaded with offline cache.", "info");
+
+    const container = document.getElementById("pos-items-container");
+    if (container) {
+      container.innerHTML = `
+        <div style="grid-column: 1/-1; text-align:center; padding: 3rem; color: var(--text-muted);">
+          <i data-lucide="alert-circle" style="width:36px;height:36px;margin-bottom:8px;color:var(--danger, #ef4444);"></i>
+          <p style="margin:0;font-weight:600;color:#374151;">Failed to load catalog</p>
+          <p style="font-size:0.85rem;margin-top:4px;color:var(--text-muted);">${escapeHtml(err.message || 'Check backend connection')}</p>
+          <button class="btn-primary-custom" style="margin-top:12px;padding:6px 16px;cursor:pointer;" onclick="loadPosCatalog()">
+            <i data-lucide="refresh-cw" style="width:14px;margin-right:6px;"></i> Retry
+          </button>
+        </div>`;
+      if (window.lucide) lucide.createIcons();
+    }
+    common.showToast("Failed to load catalog: " + (err.message || "Connection error"), "danger");
   }
 }
 

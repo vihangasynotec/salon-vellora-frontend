@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -129,6 +129,33 @@
               </div>
             </div>
 
+            <!-- Database Maintenance & Reset Card -->
+            <div class="card-custom" style="margin-bottom: 1.5rem; border: 1.5px solid #fecaca; background: #fffcfc;">
+              <div class="card-header-clean">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <i data-lucide="database-zap" style="color:#dc2626;"></i>
+                  <h3 class="card-title-clean" style="color:#b91c1c; margin:0;">Database Reset & Maintenance</h3>
+                </div>
+                <span class="badge-custom badge-danger">Danger Zone</span>
+              </div>
+              <p style="font-size:0.875rem; color:#4b5563; margin-bottom:1rem; line-height:1.5;">
+                Need to clear test data before going live? You can safely reset all operational and billing transactions (POS sales, held bills, appointments, quotations, rentals, payroll, and expenses).
+              </p>
+              <div style="background:#fef2f2; border:1px solid #fee2e2; border-radius:var(--radius-md); padding:0.85rem 1rem; margin-bottom:1.25rem;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; font-size:0.82rem;">
+                  <div style="color:#15803d; font-weight:600;"><i data-lucide="check-circle-2" style="width:14px; height:14px; vertical-align:middle; margin-right:4px;"></i> User Logins & Passwords Kept Safe</div>
+                  <div style="color:#15803d; font-weight:600;"><i data-lucide="check-circle-2" style="width:14px; height:14px; vertical-align:middle; margin-right:4px;"></i> Services & Packages Preserved</div>
+                  <div style="color:#15803d; font-weight:600;"><i data-lucide="check-circle-2" style="width:14px; height:14px; vertical-align:middle; margin-right:4px;"></i> Roles & Permissions Kept Safe</div>
+                  <div style="color:#dc2626; font-weight:600;"><i data-lucide="alert-triangle" style="width:14px; height:14px; vertical-align:middle; margin-right:4px;"></i> Sales, Bookings & Expenses Cleared</div>
+                </div>
+              </div>
+              <div style="display:flex; justify-content:flex-start;">
+                <button type="button" class="btn-danger-custom" onclick="openClearDatabaseModal()">
+                  <i data-lucide="trash-2"></i> Clear Operational Database...
+                </button>
+              </div>
+            </div>
+
             <div style="display:flex; justify-content:flex-end; margin-bottom: 3rem;">
               <button type="submit" id="btn-save-settings" class="btn-primary-custom" style="padding: 0.75rem 2rem; font-size: 1rem;">
                 <i data-lucide="check"></i> Save System Settings
@@ -138,6 +165,70 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Clear Database Confirmation Modal -->
+  <div id="modal-clear-db" class="modal-overlay">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header-custom" style="border-bottom: 1px solid #fee2e2; padding-bottom: 0.75rem;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:36px; height:36px; border-radius:50%; background:#fee2e2; display:flex; align-items:center; justify-content:center; color:#dc2626;">
+            <i data-lucide="alert-octagon" style="width:20px; height:20px;"></i>
+          </div>
+          <div>
+            <h4 style="margin:0; font-size:1.1rem; color:#991b1b; font-weight:700;">Reset Database Data</h4>
+            <span style="font-size:0.75rem; color:#6b7280;">User accounts & permissions will NOT be deleted</span>
+          </div>
+        </div>
+        <button type="button" style="background:none; border:none; cursor:pointer; color:#9ca3af;" onclick="closeClearDatabaseModal()">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-custom" style="padding: 1.25rem 0;">
+        <div style="background:#fff1f2; border:1px solid #fecdd3; border-radius:var(--radius-md); padding:0.85rem; margin-bottom:1.25rem;">
+          <p style="margin:0; font-size:0.85rem; color:#9f1239; line-height:1.45;">
+            <strong>Warning:</strong> This permanently deletes all sales transactions, customer visits, appointments, quotations, rental records, and payroll data. This action cannot be undone.
+          </p>
+        </div>
+
+        <div style="margin-bottom: 1.25rem;">
+          <label class="form-label-custom" style="margin-bottom:0.5rem;">Reset Options</label>
+          <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.875rem;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+              <input type="checkbox" id="chk-clear-trans" checked disabled style="accent-color:#dc2626;">
+              <span>Clear Sales, Payments, Appointments, Quotations & Expenses <em>(Required)</em></span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+              <input type="checkbox" id="chk-reset-cust-stats" checked disabled style="accent-color:#dc2626;">
+              <span>Reset customer spend & loyalty points to 0 <em>(Preserves customer names & phones)</em></span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+              <input type="checkbox" id="chk-delete-customers" style="accent-color:#dc2626;">
+              <span>Also delete customer profiles</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+              <input type="checkbox" id="chk-reset-stock" style="accent-color:#dc2626;">
+              <span>Reset product inventory stock quantities to 0</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label-custom" style="color:#b91c1c;">
+            To confirm this action, please type <strong>CLEAR</strong> in capital letters below:
+          </label>
+          <input type="text" id="clear-db-confirm-input" class="form-control-custom" placeholder="Type CLEAR to unlock" autocomplete="off" oninput="validateClearInput()" style="text-transform:uppercase; font-weight:700; letter-spacing:1px;">
+        </div>
+      </div>
+
+      <div class="modal-footer-custom" style="display:flex; justify-content:flex-end; gap:10px; border-top:1px solid #fee2e2; padding-top:1rem;">
+        <button type="button" class="btn-secondary-custom" onclick="closeClearDatabaseModal()">Cancel</button>
+        <button type="button" id="btn-confirm-clear-db" class="btn-danger-custom" disabled onclick="executeDatabaseClear()">
+          <i data-lucide="trash-2"></i> Confirm Database Reset
+        </button>
+      </div>
+    </div>
   </div>
 
   <div id="toast-container"></div>
@@ -150,6 +241,9 @@
     document.addEventListener("DOMContentLoaded", () => {
       common.initLayout("settings", "System Settings", "Salon identity, thermal receipt footers, quotation terms, and loyalty program rules");
       loadSettings();
+      if (window.lucide) {
+        lucide.createIcons();
+      }
     });
 
     async function loadSettings() {
@@ -196,6 +290,62 @@
         common.showToast(err.message || "Failed to update settings.", "error");
       } finally {
         btn.disabled = false;
+      }
+    }
+
+    function openClearDatabaseModal() {
+      const modal = document.getElementById("modal-clear-db");
+      const input = document.getElementById("clear-db-confirm-input");
+      const btn = document.getElementById("btn-confirm-clear-db");
+      if (input) input.value = "";
+      if (btn) btn.disabled = true;
+      modal.classList.add("active");
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+      setTimeout(() => input && input.focus(), 100);
+    }
+
+    function closeClearDatabaseModal() {
+      const modal = document.getElementById("modal-clear-db");
+      modal.classList.remove("active");
+    }
+
+    function validateClearInput() {
+      const input = document.getElementById("clear-db-confirm-input");
+      const btn = document.getElementById("btn-confirm-clear-db");
+      if (!input || !btn) return;
+      btn.disabled = (input.value.trim().toUpperCase() !== "CLEAR");
+    }
+
+    async function executeDatabaseClear() {
+      const btn = document.getElementById("btn-confirm-clear-db");
+      const deleteCustomers = document.getElementById("chk-delete-customers")?.checked || false;
+      const resetStock = document.getElementById("chk-reset-stock")?.checked || false;
+
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> Resetting Database...`;
+      if (window.lucide) lucide.createIcons();
+
+      try {
+        const res = await api.post("/settings/clear-database", {
+          confirm_text: "CLEAR",
+          delete_customers: deleteCustomers,
+          reset_stock: resetStock
+        });
+
+        if (res.success) {
+          common.showToast(res.message || "Database cleared successfully!", "success");
+          closeClearDatabaseModal();
+        } else {
+          common.showToast(res.message || "Failed to clear database.", "error");
+        }
+      } catch (err) {
+        common.showToast(err.message || "An error occurred while resetting database.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="trash-2"></i> Confirm Database Reset`;
+        if (window.lucide) lucide.createIcons();
       }
     }
   </script>

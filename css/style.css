@@ -55,8 +55,15 @@
   --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-* {
+html {
   box-sizing: border-box;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
   margin: 0;
   padding: 0;
 }
@@ -70,6 +77,10 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
+  position: relative;
 }
 
 h1, h2, h3, .brand-font {
@@ -92,6 +103,9 @@ a:hover {
   display: flex;
   min-height: 100vh;
   width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  position: relative;
 }
 
 /* Sidebar */
@@ -256,11 +270,16 @@ a:hover {
 
 /* Main Content Area */
 .app-main {
-  flex: 1;
+  flex: 1 1 auto;
   margin-left: 270px;
+  width: calc(100% - 270px);
+  max-width: calc(100% - 270px);
+  min-width: 0;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* Top Navbar */
@@ -276,12 +295,22 @@ a:hover {
   top: 0;
   z-index: 1010;
   box-shadow: var(--shadow-sm);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  gap: 12px;
 }
 
 .topbar-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.page-headline {
+  min-width: 0;
 }
 
 .page-headline h1 {
@@ -289,17 +318,24 @@ a:hover {
   font-weight: 700;
   color: var(--text-main);
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .page-headline p {
   font-size: 0.8rem;
   color: var(--text-muted);
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 /* Action Buttons */
@@ -344,6 +380,32 @@ a:hover {
   border-color: var(--primary-light);
 }
 
+.btn-danger-custom {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #ffffff;
+  border: none;
+  font-weight: 600;
+  padding: 0.55rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+  transition: var(--transition);
+  cursor: pointer;
+}
+.btn-danger-custom:hover {
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.35);
+}
+.btn-danger-custom:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .btn-soft-pink {
   background: var(--primary-light);
   color: var(--primary-dark);
@@ -370,6 +432,9 @@ a:hover {
   box-shadow: var(--shadow-sm);
   padding: 1.35rem;
   transition: var(--transition);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .card-custom:hover {
   box-shadow: var(--shadow-md);
@@ -380,6 +445,8 @@ a:hover {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1rem;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 .card-title-clean {
   font-size: 1.05rem;
@@ -389,8 +456,13 @@ a:hover {
 
 /* Content Container */
 .app-content {
-  padding: 1.75rem;
-  flex: 1;
+  padding: 1.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* Tables */
@@ -402,9 +474,12 @@ a:hover {
   overflow-x: auto;
   overflow-y: hidden;
   width: 100%;
+  max-width: 100%;
+  display: block;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: #ebd4de transparent;
+  box-sizing: border-box;
 }
 
 .table-custom-container::-webkit-scrollbar {
@@ -424,7 +499,7 @@ a:hover {
 
 .table-custom {
   width: 100%;
-  min-width: 1050px;
+  min-width: 680px;
   border-collapse: collapse;
   font-size: 0.875rem;
 }
@@ -526,12 +601,13 @@ a:hover {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   width: 100%;
-  max-width: 580px;
+  max-width: min(580px, calc(100vw - 2rem));
   max-height: 90vh;
   display: flex;
   flex-direction: column;
   border: 1px solid var(--border);
   animation: modalPop 0.2s ease-out;
+  box-sizing: border-box;
 }
 
 @keyframes modalPop {
@@ -574,12 +650,14 @@ a:hover {
   flex-direction: column;
   gap: 10px;
   pointer-events: none;
+  max-width: calc(100vw - 32px);
 }
 
 .toast-custom {
   pointer-events: auto;
-  min-width: 320px;
-  max-width: 420px;
+  min-width: min(320px, calc(100vw - 32px));
+  max-width: min(420px, calc(100vw - 32px));
+  box-sizing: border-box;
   background: #ffffff;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);

@@ -235,10 +235,10 @@ const common = {
           </div>
           <div class="topbar-right">
             <a href="pos.html" class="btn-primary-custom" data-permission="pos.create">
-              <i data-lucide="shopping-bag"></i> Quick POS
+              <i data-lucide="shopping-bag"></i> <span class="topbar-btn-text">Quick POS</span>
             </a>
             <a href="quotation-create.html" class="btn-soft-pink" data-permission="quotations.create">
-              <i data-lucide="file-plus"></i> New Quote
+              <i data-lucide="file-plus"></i> <span class="topbar-btn-text">New Quote</span>
             </a>
           </div>
         </header>
