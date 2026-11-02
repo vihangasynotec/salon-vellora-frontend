@@ -1,8 +1,3 @@
-/**
- * SALON VELLORA — COMMON APPLICATION HELPERS
- * Toast notifications, Confirm modals, Currency/Date formatters, and Navigation layout
- */
-
 const common = {
   formatCurrency(amount) {
     const num = parseFloat(amount) || 0;

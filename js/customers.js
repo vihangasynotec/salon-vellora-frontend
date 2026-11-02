@@ -1,8 +1,3 @@
-/**
- * SALON VELLORA — CUSTOMER & LOYALTY ENGINE
- * Client profiles, loyalty points, spending history & appointment tracking
- */
-
 let allLoadedClients = [];
 
 document.addEventListener("DOMContentLoaded", () => {
