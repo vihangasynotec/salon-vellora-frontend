@@ -1,15 +1,21 @@
 /**
  * SALON VELLORA — API CLIENT
  * Centralized REST API communication with automatic Authorization token handling
- * Configured for production cloud API: http://api.salonvellora.com.lk/
+ * Configured for production cloud API: https://api.salonvellora.com.lk/
  */
 
-const DEFAULT_API_BASE_URL = "http://api.salonvellora.com.lk/api";
+const DEFAULT_API_BASE_URL = "https://api.salonvellora.com.lk/api";
 
 function resolveApiBaseUrl() {
   const storedUrl = typeof localStorage !== "undefined" ? localStorage.getItem("salon_api_url") : null;
   let url = (typeof window !== "undefined" && window.SALON_API_URL) || storedUrl || DEFAULT_API_BASE_URL;
   url = String(url).trim().replace(/\/+$/, "");
+
+  // Prevent Mixed Content: If the current webpage is loaded via HTTPS, automatically upgrade HTTP to HTTPS
+  if (typeof window !== "undefined" && window.location && window.location.protocol === "https:" && url.startsWith("http://") && !url.includes("127.0.0.1") && !url.includes("localhost")) {
+    url = url.replace(/^http:\/\//, "https://");
+  }
+
   // Ensure the route prefix '/api' is present for Laravel REST routes if not already in URL
   if (!url.endsWith("/api")) {
     url = `${url}/api`;
@@ -39,6 +45,9 @@ const api = {
 
   buildUrl(endpoint) {
     if (endpoint.startsWith("http://") || endpoint.startsWith("https://")) {
+      if (typeof window !== "undefined" && window.location && window.location.protocol === "https:" && endpoint.startsWith("http://") && !endpoint.includes("127.0.0.1") && !endpoint.includes("localhost")) {
+        return endpoint.replace(/^http:\/\//, "https://");
+      }
       return endpoint;
     }
     const base = resolveApiBaseUrl();
