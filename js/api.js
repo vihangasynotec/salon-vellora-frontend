@@ -89,6 +89,7 @@ const api = {
 
     try {
       const response = await fetch(url, {
+        mode: "cors",
         ...options,
         headers
       });
