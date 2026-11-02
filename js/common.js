@@ -17,9 +17,25 @@ const common = {
 
   formatTime(timeStr) {
     if (!timeStr) return "-";
-    if (timeStr.length === 5) return timeStr; // HH:mm
-    const parts = timeStr.split(':');
-    return `${parts[0]}:${parts[1]}`;
+    if (typeof timeStr === 'string' && (timeStr.includes('T') || (timeStr.includes('-') && timeStr.includes(':')))) {
+      const d = new Date(timeStr);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+      }
+    }
+    if (typeof timeStr === 'string') {
+      const parts = timeStr.split(':');
+      if (parts.length >= 2) {
+        const rawH = parseInt(parts[0], 10);
+        const m = parts[1].slice(0, 2);
+        if (!isNaN(rawH)) {
+          const ampm = rawH >= 12 ? 'PM' : 'AM';
+          const h12 = rawH % 12 || 12;
+          return `${String(h12).padStart(2, '0')}:${m} ${ampm}`;
+        }
+      }
+    }
+    return timeStr;
   },
 
   showToast(message, type = "success") {

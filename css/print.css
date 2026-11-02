@@ -45,26 +45,46 @@
     print-color-adjust: exact !important;
   }
 
-  /* Hide interface elements */
+  /* CRITICAL: HIDE ALL SCREEN UI & PAGE DESIGN DURING PRINT */
+  body > *:not(#salon-print-host),
+  .app-layout,
   .app-sidebar,
   .app-topbar,
+  .app-main,
+  .pos-layout,
+  .pos-catalog-area,
+  .pos-cart-panel,
+  .modal-overlay,
+  .modal-card,
   .quick-action-bar,
   .cart-actions-grid,
   .btn,
   button,
   .no-print,
-  #toast-container,
-  .modal-overlay:not(.print-active) {
+  #toast-container {
     display: none !important;
-  }
-
-  .app-main {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
     margin: 0 !important;
     padding: 0 !important;
   }
 
+  /* SHOW ONLY THE CLEAN RECEIPT/INVOICE */
+  #salon-print-host,
   .print-only-container {
     display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: static !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    background: #ffffff !important;
+    overflow: visible !important;
   }
 
   /* --------------------------------------------------------------------------

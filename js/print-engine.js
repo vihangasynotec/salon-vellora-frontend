@@ -720,7 +720,6 @@ const PrintEngine = {
    * Directly downloads any HTML element as a high-resolution PDF
    */
   async downloadAsPdf(elementOrHtml, filename = "Salon_Vellora_Doc.pdf", formatOrThermal = false) {
-    // Check if html2pdf is available
     if (typeof html2pdf === "undefined") {
       alert("PDF library is loading. Please try again in a few seconds or use the Print button to Save as PDF.");
       return;
@@ -733,110 +732,129 @@ const PrintEngine = {
     let targetEl;
     let isCreated = false;
 
+    // Create container in DOM with positive z-index and fixed position so html2canvas renders
+    // all content onto the canvas correctly without painting over it with background
     if (typeof elementOrHtml === "string") {
       targetEl = document.createElement("div");
       targetEl.innerHTML = elementOrHtml;
-      targetEl.style.position = "absolute";
-      targetEl.style.left = "-9999px";
+      targetEl.style.position = "fixed";
+      targetEl.style.left = "0";
       targetEl.style.top = "0";
-      targetEl.style.width = isThermal ? "72mm" : (isDualA4 ? "196mm" : (isFullA4 ? "190mm" : "196mm"));
+      targetEl.style.zIndex = "99999999";
+      targetEl.style.opacity = "1";
+      targetEl.style.visibility = "visible";
+      targetEl.style.pointerEvents = "none";
+      targetEl.style.width = isThermal ? "300px" : (isDualA4 ? "780px" : (isFullA4 ? "780px" : "780px"));
       targetEl.style.background = "#ffffff";
       targetEl.style.boxSizing = "border-box";
       document.body.appendChild(targetEl);
       isCreated = true;
     } else {
-      targetEl = elementOrHtml;
+      targetEl = document.createElement("div");
+      targetEl.appendChild(elementOrHtml.cloneNode(true));
+      targetEl.style.position = "fixed";
+      targetEl.style.left = "0";
+      targetEl.style.top = "0";
+      targetEl.style.zIndex = "99999999";
+      targetEl.style.opacity = "1";
+      targetEl.style.visibility = "visible";
+      targetEl.style.pointerEvents = "none";
+      targetEl.style.width = isThermal ? "300px" : (isDualA4 ? "780px" : (isFullA4 ? "780px" : "780px"));
+      targetEl.style.background = "#ffffff";
+      targetEl.style.boxSizing = "border-box";
+      document.body.appendChild(targetEl);
+      isCreated = true;
     }
 
-    // Wait briefly to guarantee any image assets inside targetEl are fully decoded
-    const images = targetEl.querySelectorAll ? targetEl.querySelectorAll("img") : [];
-    const imgPromises = Array.from(images).map(img => {
-      if (img.complete) return Promise.resolve();
-      return new Promise(resolve => {
-        img.onload = resolve;
-        img.onerror = resolve;
-      });
-    });
-    if (imgPromises.length > 0) {
-      await Promise.all(imgPromises);
+    // Wait for all images inside targetEl to load
+    const images = Array.from(targetEl.querySelectorAll("img"));
+    if (images.length > 0) {
+      await Promise.all(images.map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(res => {
+          img.onload = res;
+          img.onerror = res;
+          setTimeout(res, 400);
+        });
+      }));
     }
+
+    // Give browser a layout frame
+    await new Promise(r => setTimeout(r, 120));
 
     let opt;
     if (isThermal) {
-      // Accurately compute the physical roll height in mm (1px ≈ 0.264583mm at 96dpi)
-      const heightPx = Math.max(targetEl.offsetHeight, targetEl.scrollHeight, 450);
-      const calculatedHeightMm = Math.ceil(heightPx * 0.264583) + 12;
-      const pdfHeightMm = Math.max(120, calculatedHeightMm);
-
+      const heightPx = Math.max(targetEl.offsetHeight, 450);
+      const calculatedHeightMm = Math.ceil(heightPx * 0.264583) + 10;
       opt = {
         margin: [2, 2, 2, 2],
         filename: filename,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: {
-          scale: 3,
+          scale: 2,
           useCORS: true,
-          letterRendering: true,
+          allowTaint: true,
           logging: false,
-          scrollY: 0,
-          scrollX: 0,
           backgroundColor: '#ffffff'
         },
-        jsPDF: {
-          unit: 'mm',
-          format: [80, pdfHeightMm],
-          orientation: 'portrait'
-        }
+        jsPDF: { unit: 'mm', format: [80, calculatedHeightMm], orientation: 'portrait' }
       };
-    } else if (isDualA4) {
-      // 2 Receipts on 1 standard A4 Sheet
+    } else if (isDualA4 || isFullA4) {
       opt = {
-        margin: [3, 4, 3, 4],
+        margin: [5, 5, 5, 5],
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2.2, useCORS: true, letterRendering: true, logging: false },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-    } else if (isFullA4) {
-      opt = {
-        margin: [6, 6, 6, 6],
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
     } else {
       // Half-A4 (A5 ISO Standard in Landscape: 210mm x 148.5mm)
       opt = {
-        margin: [3, 4, 3, 4],
+        margin: [4, 4, 4, 4],
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2.4, useCORS: true, letterRendering: true, logging: false },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        },
         jsPDF: { unit: 'mm', format: 'a5', orientation: 'landscape' }
       };
     }
 
     try {
       if (window.common && window.common.showToast) {
-        const toastMsg = isThermal ? "Generating high-resolution 80mm PDF..." : (isDualA4 ? "Generating 2-in-1 A4 Sheet PDF..." : (isFullA4 ? "Generating Luxury A4 PDF..." : "Generating Half A4 (Landscape) Invoice PDF..."));
-        window.common.showToast(toastMsg, "info");
+        window.common.showToast("Generating PDF document...", "info", 2000);
       }
+
       await html2pdf().set(opt).from(targetEl).save();
+
+      // Delay before removing targetEl to ensure canvas stream has finalized
+      await new Promise(r => setTimeout(r, 600));
+
       if (window.common && window.common.showToast) {
-        window.common.showToast("Document PDF downloaded successfully!", "success");
+        window.common.showToast("Document PDF downloaded successfully!", "success", 3000);
       }
     } catch (err) {
       console.error("PDF generation error:", err);
-      alert("Could not generate PDF directly. You can click 'Print' and choose 'Save as PDF' from your browser's print options.");
+      if (window.common && window.common.showToast) {
+        window.common.showToast("Could not generate PDF: " + err.message, "error");
+      }
     } finally {
-      if (isCreated && targetEl.parentElement) {
-        targetEl.parentElement.removeChild(targetEl);
+      if (isCreated && targetEl && targetEl.parentNode) {
+        targetEl.parentNode.removeChild(targetEl);
       }
     }
   },
 
-  /**
-   * Prints 80mm receipt using browser print dialog with dedicated thermal styling
-   */
   printThermal(elementOrHtml) {
     this._triggerPrint(elementOrHtml, "print-receipt", "@page { size: 80mm auto; margin: 0; }");
   },

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -17,28 +17,54 @@
       <div id="app-topbar-placeholder"></div>
 
       <div class="app-content">
+        <!-- HEADER & ACTIONS -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px;">
           <div>
             <h2 style="font-size:1.3rem;font-weight:700;">Salon Products & Retail Inventory</h2>
-            <p style="font-size:0.8rem;color:var(--text-muted);margin:0;">Shampoos, conditioners, styling serums, cosmetics and beauty products</p>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin:0;">Shampoos, conditioners, styling serums, cosmetics and beauty stock</p>
           </div>
-          <button class="btn-primary-custom" onclick="openProductModal()" data-permission="inventory.create">
-            <i data-lucide="plus-circle"></i> Add Product
-          </button>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button class="btn-primary-custom" onclick="openProductModal()" data-permission="inventory.create">
+              <i data-lucide="plus-circle"></i> Add Product
+            </button>
+          </div>
         </div>
 
+        <!-- SEARCH & BRAND FILTER BAR -->
+        <div class="card-custom" style="padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between;background:var(--card-bg, #fff);border-radius:12px;border:1px solid rgba(0,0,0,0.06);">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;flex:1;min-width:280px;">
+            <div style="position:relative;flex:1;min-width:220px;">
+              <input type="text" id="product-search-input" class="form-control-custom" placeholder="Search product name, SKU, or barcode..." oninput="handleProductFilter()">
+            </div>
+            <div style="width:200px;">
+              <select id="product-brand-filter" class="form-control-custom" onchange="handleProductFilter()">
+                <option value="">All Brands</option>
+              </select>
+            </div>
+            <div style="width:200px;">
+              <select id="product-category-filter" class="form-control-custom" onchange="handleProductFilter()">
+                <option value="">All Categories</option>
+              </select>
+            </div>
+          </div>
+          <div id="product-count-badge" style="font-size:0.85rem;font-weight:600;color:var(--text-muted);white-space:nowrap;">
+            Loading items...
+          </div>
+        </div>
+
+        <!-- PRODUCTS TABLE -->
         <div class="table-custom-container">
           <table class="table-custom">
             <thead>
               <tr>
                 <th>Product Name</th>
-                <th>Category</th>
                 <th>Brand</th>
+                <th>Category</th>
                 <th>SKU</th>
-                <th>Barcode</th>
                 <th>Cost Price</th>
                 <th>Retail Price</th>
-                <th>Stock</th>
+                <th>In Stock</th>
+                <th>Status</th>
                 <th style="text-align:right;">Actions</th>
               </tr>
             </thead>
@@ -53,7 +79,7 @@
 
   <!-- PRODUCT CREATE / EDIT MODAL -->
   <div class="modal-overlay" id="product-modal">
-    <div class="modal-card" style="max-width: 500px;">
+    <div class="modal-card" style="max-width: 520px;">
       <div class="modal-header-custom">
         <h3 class="card-title-clean" id="product-modal-title">Add Salon Product</h3>
         <button class="btn-close-modal" style="background:none;border:none;cursor:pointer;" onclick="closeProductModal()"><i data-lucide="x"></i></button>
@@ -61,48 +87,73 @@
       <form onsubmit="handleSaveProduct(event)">
         <div class="modal-body-custom">
           <input type="hidden" id="p-id">
+          
+          <div id="super-admin-badge-note" style="display:none;margin-bottom:1rem;padding:8px 12px;background:rgba(217,70,239,0.08);border:1px solid rgba(217,70,239,0.2);border-radius:8px;font-size:0.8rem;color:var(--primary-dark);">
+            <i data-lucide="shield-check" style="width:14px;vertical-align:middle;margin-right:4px;"></i> Super Admin authorization active: Product details, cost, retail prices, and stock can be edited.
+          </div>
+
           <div style="margin-bottom:1rem;">
             <label class="form-label-custom">Product Name *</label>
-            <input type="text" id="p-name" class="form-control-custom" required placeholder="e.g. L'Oréal Serie Expert Absolut Repair 500ml">
+            <input type="text" id="p-name" class="form-control-custom" required placeholder="e.g. Sepora Hair Colour Black (1.0)">
           </div>
+
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
             <div>
-              <label class="form-label-custom">Category</label>
-              <input type="text" id="p-cat" class="form-control-custom" placeholder="e.g. Hair Care">
+              <label class="form-label-custom">Brand *</label>
+              <select id="p-brand-select" class="form-control-custom" required>
+                <option value="">Select Brand</option>
+              </select>
             </div>
             <div>
-              <label class="form-label-custom">Brand</label>
-              <input type="text" id="p-brand" class="form-control-custom" placeholder="e.g. L'Oréal">
+              <label class="form-label-custom">Category *</label>
+              <select id="p-cat-select" class="form-control-custom" required>
+                <option value="">Select Category</option>
+              </select>
             </div>
           </div>
+
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
             <div>
               <label class="form-label-custom">SKU Code</label>
-              <input type="text" id="p-sku" class="form-control-custom" placeholder="e.g. LOR-ABS-500">
+              <input type="text" id="p-sku" class="form-control-custom" placeholder="e.g. SEP-001">
             </div>
             <div>
               <label class="form-label-custom">Barcode</label>
-              <input type="text" id="p-barcode" class="form-control-custom" placeholder="e.g. 790011223301">
+              <input type="text" id="p-barcode" class="form-control-custom" placeholder="e.g. 79002001">
             </div>
           </div>
+
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
             <div>
               <label class="form-label-custom">Cost Price (LKR) *</label>
-              <input type="number" id="p-cost" class="form-control-custom" required min="0" value="0">
+              <input type="number" id="p-cost" class="form-control-custom" required min="0" step="0.01" value="0">
+              <span style="font-size:0.7rem;color:var(--text-muted);">Can be updated anytime</span>
             </div>
             <div>
               <label class="form-label-custom">Retail Price (LKR) *</label>
-              <input type="number" id="p-retail" class="form-control-custom" required min="0" value="0">
+              <input type="number" id="p-retail" class="form-control-custom" required min="0" step="0.01" value="0">
+              <span style="font-size:0.7rem;color:var(--text-muted);">Can be updated anytime</span>
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
             <div>
-              <label class="form-label-custom">Initial Stock Quantity</label>
-              <input type="number" id="p-stock" class="form-control-custom" value="10" min="0">
+              <label class="form-label-custom">Stock Quantity</label>
+              <input type="number" id="p-stock" class="form-control-custom" value="0" min="0">
             </div>
             <div>
-              <label class="form-label-custom">Low Stock Alert Level</label>
-              <input type="number" id="p-alert" class="form-control-custom" value="5" min="1">
+              <label class="form-label-custom">Alert Min</label>
+              <input type="number" id="p-alert" class="form-control-custom" value="2" min="0">
+            </div>
+            <div>
+              <label class="form-label-custom">Unit</label>
+              <select id="p-unit" class="form-control-custom">
+                <option value="pcs">pcs</option>
+                <option value="bottle">bottle</option>
+                <option value="pack">pack</option>
+                <option value="tube">tube</option>
+                <option value="box">box</option>
+              </select>
             </div>
           </div>
         </div>

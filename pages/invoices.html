@@ -8,6 +8,535 @@
   <link rel="stylesheet" href="../css/print.css">
   <link rel="stylesheet" href="../css/responsive.css">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* ==========================================================================
+       SALON VELLORA LUXURY SALES & INVOICES TABLE + ACTION ICONS
+       ========================================================================== */
+    .sales-header-card {
+      background: #ffffff;
+      border: 1px solid #f1e1e7;
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 4px 20px rgba(201, 93, 126, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .sales-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .search-input-wrap {
+      flex: 1;
+      max-width: 480px;
+      min-width: 260px;
+      position: relative;
+    }
+
+    .search-input-wrap .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 17px;
+      height: 17px;
+      color: #9ca3af;
+      pointer-events: none;
+    }
+
+    .search-input-wrap .search-clear-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #f3f4f6;
+      border: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #6b7280;
+      transition: all 0.15s ease;
+      padding: 0;
+    }
+
+    .search-input-wrap .search-clear-btn:hover {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .search-input-field {
+      width: 100%;
+      height: 44px;
+      padding: 0 38px 0 42px;
+      background: #faf7f8;
+      border: 1px solid #eed9e1;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      color: #1f2937;
+      outline: none;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+
+    .search-input-field:focus {
+      background: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(201, 93, 126, 0.15);
+    }
+
+    .btn-new-sale-hero {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #c95d7e 0%, #b04566 100%);
+      color: #ffffff;
+      padding: 0 1.25rem;
+      height: 44px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      text-decoration: none;
+      box-shadow: 0 4px 14px rgba(201, 93, 126, 0.35);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-new-sale-hero:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(201, 93, 126, 0.45);
+      color: #ffffff;
+    }
+
+    .sales-kpi-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-top: 0.85rem;
+      border-top: 1px solid #f8e9ef;
+    }
+
+    .filter-pills-group {
+      display: inline-flex;
+      background: #fdf2f5;
+      padding: 4px;
+      border-radius: 12px;
+      gap: 4px;
+    }
+
+    .filter-pill-btn {
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .filter-pill-btn.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(201, 93, 126, 0.15);
+    }
+
+    .filter-pill-btn .pill-count {
+      font-size: 0.7rem;
+      background: rgba(0, 0, 0, 0.06);
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .filter-pill-btn.active .pill-count {
+      background: #fce7ec;
+      color: var(--primary);
+    }
+
+    .kpi-chips-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.82rem;
+      color: #6b7280;
+      flex-wrap: wrap;
+    }
+
+    .kpi-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #faf7f8;
+      border: 1px solid #eed9e1;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-weight: 500;
+    }
+
+    .kpi-chip strong {
+      color: #1f2937;
+      font-weight: 700;
+    }
+
+    /* TABLE CARD & HEADERS */
+    .luxury-table-card {
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #f1e1e7;
+      box-shadow: 0 6px 25px rgba(201, 93, 126, 0.04);
+      overflow-x: auto;
+    }
+
+    .luxury-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.875rem;
+      min-width: 960px;
+    }
+
+    .luxury-table th {
+      background: #faf4f6;
+      color: #8b6b77;
+      font-weight: 700;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #f5e3eb;
+      white-space: nowrap;
+    }
+
+    .luxury-table td {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #f8eef2;
+      vertical-align: middle;
+      transition: background-color 0.15s ease;
+    }
+
+    .luxury-table tbody tr:hover td {
+      background-color: #fff9fb;
+    }
+
+    .luxury-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* INVOICE CELL */
+    .inv-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      color: var(--primary);
+      background: #fdf2f5;
+      border: 1px solid #f8d7e0;
+      padding: 5px 10px;
+      border-radius: 8px;
+      text-decoration: none;
+      cursor: pointer;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.82rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .inv-tag:hover {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(201, 93, 126, 0.25);
+    }
+
+    /* CLIENT CELL */
+    .client-info-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .client-avatar-disc {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.82rem;
+      flex-shrink: 0;
+    }
+
+    .client-avatar-disc.is-guest {
+      background: #f3f4f6;
+      color: #9ca3af;
+    }
+
+    .client-avatar-disc.is-client {
+      background: linear-gradient(135deg, #fce7ec 0%, #f7d0dc 100%);
+      color: var(--primary);
+      border: 1px solid rgba(201, 93, 126, 0.25);
+    }
+
+    .client-meta-data .client-name-bold {
+      font-weight: 600;
+      color: #1f2937;
+      font-size: 0.88rem;
+      line-height: 1.25;
+    }
+
+    .client-meta-data .client-sub-phone {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.74rem;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    /* DATE & TIME */
+    .date-time-box {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .date-text-primary {
+      font-weight: 600;
+      color: #374151;
+      font-size: 0.85rem;
+    }
+
+    .time-text-muted {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    /* CASHIER BADGE */
+    .cashier-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #4b5563;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      padding: 3px 9px;
+      border-radius: 6px;
+    }
+
+    /* PAYMENT PILLS */
+    .pay-pill-modern {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .pay-pill-cash {
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+    }
+
+    .pay-pill-card {
+      background: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+    }
+
+    .pay-pill-transfer {
+      background: #f5f3ff;
+      color: #7c3aed;
+      border: 1px solid #ddd6fe;
+    }
+
+    .pay-pill-default {
+      background: #fdf2f5;
+      color: var(--primary);
+      border: 1px solid #f8d7e0;
+    }
+
+    /* GRAND TOTAL */
+    .grand-total-amount {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .grand-total-currency {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #9ca3af;
+      letter-spacing: 0.04em;
+    }
+
+    .grand-total-val {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #111827;
+    }
+
+    /* STATUS BADGES */
+    .status-pill-modern {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .status-pill-completed {
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+    }
+
+    .status-dot-green {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+    }
+
+    .status-pill-refunded {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+
+    .status-dot-red {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ef4444;
+    }
+
+    /* ==========================================================================
+       ACTION DOCK & LUXURY ACTION BUTTONS / ICONS
+       ========================================================================== */
+    .action-dock {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .action-btn-luxury {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 32px;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      user-select: none;
+      text-decoration: none;
+      box-sizing: border-box;
+    }
+
+    /* WhatsApp Button */
+    .action-btn-wa {
+      padding: 0 11px;
+      background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(37, 211, 102, 0.25);
+    }
+
+    .action-btn-wa:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(37, 211, 102, 0.45);
+      filter: brightness(1.05);
+      color: #ffffff;
+    }
+
+    /* View & Print Button */
+    .action-btn-view {
+      padding: 0 11px;
+      background: linear-gradient(135deg, #fff0f4 0%, #fde4ec 100%);
+      color: var(--primary);
+      border: 1px solid rgba(201, 93, 126, 0.28);
+      box-shadow: 0 2px 6px rgba(201, 93, 126, 0.08);
+    }
+
+    .action-btn-view:hover {
+      background: linear-gradient(135deg, #c95d7e 0%, #a84364 100%);
+      color: #ffffff;
+      border-color: transparent;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(201, 93, 126, 0.35);
+    }
+
+    /* Quick PDF Download Button */
+    .action-btn-pdf {
+      width: 32px;
+      padding: 0;
+      background: #f8fafc;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .action-btn-pdf:hover {
+      background: #4f46e5;
+      color: #ffffff;
+      border-color: #4f46e5;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    /* Refund Action Button */
+    .action-btn-refund {
+      width: 32px;
+      padding: 0;
+      background: #fef2f2;
+      color: #ef4444;
+      border: 1px solid #fecaca;
+      box-shadow: 0 1px 3px rgba(239, 68, 68, 0.06);
+    }
+
+    .action-btn-refund:hover {
+      background: #dc2626;
+      color: #ffffff;
+      border-color: #dc2626;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+    }
+  </style>
 </head>
 <body>
 
@@ -18,18 +547,56 @@
       <div id="app-topbar-placeholder"></div>
 
       <div class="app-content">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px;">
-          <div style="flex:1;max-width:500px;position:relative;">
-            <input type="text" id="sales-search" class="form-control-custom" placeholder="Search by invoice # or client name..." style="padding-left:38px;" oninput="debounceSalesSearch()">
-            <i data-lucide="search" style="position:absolute;left:12px;top:10px;width:18px;color:var(--text-light);"></i>
+        <!-- TOP CONTROLS & KPI CARD -->
+        <div class="sales-header-card">
+          <div class="sales-header-row">
+            <div class="search-input-wrap">
+              <i data-lucide="search" class="search-icon"></i>
+              <input type="text" id="sales-search" class="search-input-field" placeholder="Search by invoice #, client name, or phone..." oninput="debounceSalesSearch()">
+              <button type="button" id="sales-clear-btn" class="search-clear-btn" onclick="clearSalesSearch()" title="Clear search">
+                <i data-lucide="x" style="width:13px;height:13px;"></i>
+              </button>
+            </div>
+
+            <a href="pos.html" class="btn-new-sale-hero" data-permission="pos.create">
+              <i data-lucide="plus-circle" style="width:18px;height:18px;"></i>
+              <span>New POS Sale</span>
+            </a>
           </div>
-          <a href="pos.html" class="btn-primary-custom" data-permission="pos.create">
-            <i data-lucide="plus-circle"></i> New POS Sale
-          </a>
+
+          <!-- Filter Pills & Summary KPIs -->
+          <div class="sales-kpi-bar">
+            <div class="filter-pills-group">
+              <button type="button" class="filter-pill-btn active" data-status="all" onclick="setStatusFilter('all')">
+                <span>All Sales</span>
+                <span class="pill-count" id="count-filter-all">0</span>
+              </button>
+              <button type="button" class="filter-pill-btn" data-status="completed" onclick="setStatusFilter('completed')">
+                <span>Completed</span>
+                <span class="pill-count" id="count-filter-completed">0</span>
+              </button>
+              <button type="button" class="filter-pill-btn" data-status="refunded" onclick="setStatusFilter('refunded')">
+                <span>Refunded</span>
+                <span class="pill-count" id="count-filter-refunded">0</span>
+              </button>
+            </div>
+
+            <div class="kpi-chips-wrap">
+              <div class="kpi-chip">
+                <i data-lucide="file-check-2" style="width:14px;height:14px;color:var(--primary);"></i>
+                <span>Showing: <strong id="kpi-filtered-count">0 invoices</strong></span>
+              </div>
+              <div class="kpi-chip">
+                <i data-lucide="circle-dollar-sign" style="width:14px;height:14px;color:#059669;"></i>
+                <span>Total Value: <strong id="kpi-filtered-revenue" style="color:#059669;">LKR 0.00</strong></span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="table-custom-container">
-          <table class="table-custom">
+        <!-- LUXURY SALES TABLE -->
+        <div class="luxury-table-card">
+          <table class="luxury-table">
             <thead>
               <tr>
                 <th>Invoice Number</th>
@@ -43,7 +610,14 @@
               </tr>
             </thead>
             <tbody id="sales-table-body">
-              <tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--text-muted);">Loading sales records...</td></tr>
+              <tr>
+                <td colspan="8" style="text-align:center;padding:3.5rem 1rem;color:var(--text-muted);">
+                  <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <i data-lucide="loader-2" class="spin" style="width:18px;height:18px;color:var(--primary);"></i>
+                    <span>Loading sales archive...</span>
+                  </div>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -127,6 +701,7 @@
   <script>
     let allSales = [];
     let viewingSale = null;
+    let currentStatusFilter = 'all';
 
     document.addEventListener("DOMContentLoaded", () => {
       common.initLayout("invoices", "Sales & Billing Archive", "Complete transaction history, reprints for 80mm receipts, A4 invoices & authorized refunds");
@@ -145,58 +720,231 @@
       salesTimer = setTimeout(loadSales, 300);
     }
 
+    function clearSalesSearch() {
+      const input = document.getElementById("sales-search");
+      input.value = "";
+      const clearBtn = document.getElementById("sales-clear-btn");
+      if (clearBtn) clearBtn.style.display = "none";
+      loadSales();
+    }
+
+    function setStatusFilter(status) {
+      currentStatusFilter = status;
+      document.querySelectorAll('.filter-pill-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.status === status);
+      });
+      renderSalesTable();
+    }
+
     async function loadSales() {
-      const tbody = document.getElementById("sales-table-body");
       const search = document.getElementById("sales-search").value.trim();
+      const clearBtn = document.getElementById("sales-clear-btn");
+      if (clearBtn) clearBtn.style.display = search ? "flex" : "none";
 
       try {
-        const res = await api.get("/sales", { search, per_page: 50 });
+        const res = await api.get("/sales", { search, per_page: 100 });
         if (!res.success || !res.data) return;
 
         allSales = res.data.data || res.data;
+        renderSalesTable();
+      } catch (e) {
+        common.showToast("Failed to load sales archive.", "error");
+      }
+    }
 
-        if (allSales.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--text-muted);">No sales found.</td></tr>`;
-          return;
-        }
+    function renderSalesTable() {
+      const tbody = document.getElementById("sales-table-body");
 
-        tbody.innerHTML = allSales.map(s => `
+      // Calculate total counts
+      const countAll = allSales.length;
+      const countCompleted = allSales.filter(s => s.status === 'completed').length;
+      const countRefunded = allSales.filter(s => s.status === 'refunded').length;
+
+      const pillAll = document.getElementById("count-filter-all");
+      const pillComp = document.getElementById("count-filter-completed");
+      const pillRef = document.getElementById("count-filter-refunded");
+      if (pillAll) pillAll.textContent = countAll;
+      if (pillComp) pillComp.textContent = countCompleted;
+      if (pillRef) pillRef.textContent = countRefunded;
+
+      // Filter sales based on selected status tab
+      let filtered = allSales;
+      if (currentStatusFilter === 'completed') {
+        filtered = allSales.filter(s => s.status === 'completed');
+      } else if (currentStatusFilter === 'refunded') {
+        filtered = allSales.filter(s => s.status === 'refunded');
+      }
+
+      // Update KPI Bar
+      const totalRevenue = filtered
+        .filter(s => s.status === 'completed')
+        .reduce((sum, s) => sum + (parseFloat(s.grand_total) || 0), 0);
+
+      const statCount = document.getElementById("kpi-filtered-count");
+      const statTotal = document.getElementById("kpi-filtered-revenue");
+      if (statCount) statCount.textContent = `${filtered.length} invoice${filtered.length === 1 ? '' : 's'}`;
+      if (statTotal) statTotal.textContent = `LKR ${totalRevenue.toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
           <tr>
-            <td>
-              <div style="font-weight:700;color:var(--primary);">${s.invoice_number}</div>
-            </td>
-            <td>
-              <div style="font-weight:600;">${s.customer ? s.customer.name : 'Walk-in Client'}</div>
-              <div style="font-size:0.75rem;color:var(--text-muted);">${s.customer ? s.customer.phone : ''}</div>
-            </td>
-            <td>
-              <div>${common.formatDate(s.created_at)}</div>
-              <div style="font-size:0.75rem;color:var(--text-muted);">${common.formatTime(s.created_at)}</div>
-            </td>
-            <td>${s.cashier ? s.cashier.name : 'Cashier'}</td>
-            <td style="text-transform:capitalize;"><span class="badge-custom badge-primary">${s.payment_method}</span></td>
-            <td style="font-weight:700;">${common.formatCurrency(s.grand_total)}</td>
-            <td><span class="badge-custom badge-${s.status === 'completed' ? 'success' : 'danger'}">${s.status}</span></td>
-            <td style="text-align:right;">
-              <button class="btn-whatsapp-sm" onclick="shareInvoiceRowWhatsApp(${s.id})" title="Share Receipt on WhatsApp">
-                <i data-lucide="message-circle" style="width:13px;height:13px;"></i> WhatsApp
-              </button>
-              <button class="btn-soft-pink" style="padding:4px 8px;font-size:0.75rem;" onclick="viewInvoiceDetails(${s.id})" title="View / Reprint">
-                <i data-lucide="eye" style="width:14px;"></i> View
-              </button>
-              ${s.status === 'completed' ? `
-              <button class="btn-secondary-custom" style="padding:4px 8px;font-size:0.75rem;color:var(--danger);" onclick="openRefundModal(${s.id}, '${s.invoice_number}')" title="Refund Bill" data-permission="pos.refund">
-                <i data-lucide="rotate-ccw" style="width:14px;"></i>
-              </button>` : ''}
+            <td colspan="8" style="text-align:center;padding:3.5rem 1rem;color:var(--text-muted);">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+                <i data-lucide="receipt-text" style="width:40px;height:40px;color:#d1d5db;"></i>
+                <div style="font-weight:700;color:#4b5563;font-size:1rem;">No Invoices Found</div>
+                <div style="font-size:0.8rem;color:#9ca3af;max-width:320px;">No sales match your current search query or active filter. Try resetting filters.</div>
+              </div>
             </td>
           </tr>
-        `).join("");
-
+        `;
         if (window.lucide) lucide.createIcons();
-        permissions.applyUI();
+        return;
+      }
 
-      } catch (e) {
-        common.showToast("Failed to load sales.", "error");
+      tbody.innerHTML = filtered.map(s => {
+        const isCompleted = s.status === 'completed';
+        const grandTotalNum = parseFloat(s.grand_total) || 0;
+        const paymentMethod = (s.payment_method || 'cash').toLowerCase();
+
+        // Payment Mode Styling
+        let payClass = 'pay-pill-default';
+        let payIcon = 'wallet';
+        if (paymentMethod.includes('cash')) {
+          payClass = 'pay-pill-cash';
+          payIcon = 'banknote';
+        } else if (paymentMethod.includes('card')) {
+          payClass = 'pay-pill-card';
+          payIcon = 'credit-card';
+        } else if (paymentMethod.includes('transfer') || paymentMethod.includes('bank')) {
+          payClass = 'pay-pill-transfer';
+          payIcon = 'arrow-left-right';
+        }
+
+        const clientInitial = s.customer && s.customer.name ? s.customer.name.trim().charAt(0).toUpperCase() : '';
+
+        return `
+          <tr class="invoice-row-luxury">
+            <!-- Invoice Number -->
+            <td>
+              <button type="button" class="inv-tag" onclick="viewInvoiceDetails(${s.id})" title="Click to view full invoice & print">
+                <i data-lucide="receipt" style="width:13px;height:13px;"></i>
+                <span>${s.invoice_number}</span>
+              </button>
+            </td>
+
+            <!-- Client Info -->
+            <td>
+              <div class="client-info-wrap">
+                <div class="client-avatar-disc ${s.customer ? 'is-client' : 'is-guest'}">
+                  ${s.customer ? clientInitial : '<i data-lucide="user" style="width:15px;height:15px;"></i>'}
+                </div>
+                <div class="client-meta-data">
+                  <div class="client-name-bold">${s.customer ? s.customer.name : 'Walk-in Client'}</div>
+                  ${s.customer && s.customer.phone ? `
+                    <div class="client-sub-phone"><i data-lucide="phone" style="width:11px;height:11px;"></i> ${s.customer.phone}</div>
+                  ` : '<div class="client-sub-phone" style="color:#9ca3af;">Walk-in Guest</div>'}
+                </div>
+              </div>
+            </td>
+
+            <!-- Date & Time -->
+            <td>
+              <div class="date-time-box">
+                <div class="date-text-primary">${common.formatDate(s.created_at)}</div>
+                <div class="time-text-muted"><i data-lucide="clock" style="width:11px;height:11px;"></i> ${common.formatTime(s.created_at)}</div>
+              </div>
+            </td>
+
+            <!-- Cashier -->
+            <td>
+              <span class="cashier-badge">
+                <i data-lucide="user-check" style="width:12px;height:12px;color:var(--primary);"></i>
+                <span>${s.cashier ? s.cashier.name : 'Cashier'}</span>
+              </span>
+            </td>
+
+            <!-- Payment Mode -->
+            <td>
+              <span class="pay-pill-modern ${payClass}">
+                <i data-lucide="${payIcon}" style="width:12px;height:12px;"></i>
+                <span>${s.payment_method || 'Cash'}</span>
+              </span>
+            </td>
+
+            <!-- Grand Total -->
+            <td>
+              <div class="grand-total-amount">
+                <span class="grand-total-currency">LKR</span>
+                <span class="grand-total-val">${grandTotalNum.toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+            </td>
+
+            <!-- Status -->
+            <td>
+              ${isCompleted ? `
+                <span class="status-pill-modern status-pill-completed">
+                  <span class="status-dot-green"></span> Completed
+                </span>
+              ` : `
+                <span class="status-pill-modern status-pill-refunded">
+                  <span class="status-dot-red"></span> Refunded
+                </span>
+              `}
+            </td>
+
+            <!-- LUXURY ACTION DOCK -->
+            <td style="text-align:right;">
+              <div class="action-dock">
+                <!-- WhatsApp Share Button -->
+                <button type="button" class="action-btn-luxury action-btn-wa" onclick="shareInvoiceRowWhatsApp(${s.id})" title="Share Receipt PDF via WhatsApp">
+                  <i data-lucide="message-circle" style="width:14px;height:14px;"></i>
+                  <span>WhatsApp</span>
+                </button>
+
+                <!-- View & Print Button -->
+                <button type="button" class="action-btn-luxury action-btn-view" onclick="viewInvoiceDetails(${s.id})" title="View, Print & Download Details">
+                  <i data-lucide="eye" style="width:14px;height:14px;"></i>
+                  <span>View</span>
+                </button>
+
+                <!-- Quick 1-Click PDF Download Button -->
+                <button type="button" class="action-btn-luxury action-btn-pdf" onclick="quickDownloadPdfRow(${s.id})" title="Instant 1-Click PDF Download">
+                  <i data-lucide="download" style="width:14px;height:14px;"></i>
+                </button>
+
+                <!-- Refund Button -->
+                ${isCompleted ? `
+                  <button type="button" class="action-btn-luxury action-btn-refund" onclick="openRefundModal(${s.id}, '${s.invoice_number}')" title="Process Sale Refund" data-permission="pos.refund">
+                    <i data-lucide="rotate-ccw" style="width:14px;height:14px;"></i>
+                  </button>
+                ` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      if (window.lucide) lucide.createIcons();
+      permissions.applyUI();
+    }
+
+    async function quickDownloadPdfRow(id) {
+      try {
+        let sale = allSales.find(s => s.id === id);
+        if (!sale || !sale.items) {
+          common.showToast("Fetching invoice details...", "info");
+          const res = await api.get(`/sales/${id}`);
+          if (res && res.success && res.data) sale = res.data;
+        }
+        if (sale) {
+          common.showToast("Generating PDF download...", "info");
+          const html = PrintEngine.generateA4Invoice(sale, "HALF A4 TAX INVOICE", false);
+          PrintEngine.downloadAsPdf(html, `Salon_Vellora_Invoice_${sale.invoice_number}.pdf`, 'half-a4-landscape');
+        } else {
+          common.showToast("Sale not found.", "error");
+        }
+      } catch (err) {
+        common.showToast("Could not download invoice PDF.", "error");
       }
     }
 
@@ -206,8 +954,7 @@
         if (!res.success || !res.data) return;
 
         viewingSale = res.data;
-        currentInvTab = 'a4';
-        renderInvoiceModalPreview();
+        switchInvoiceTab('a4-half');
 
         document.getElementById("invoice-preview-modal").classList.add("active");
         if (window.lucide) lucide.createIcons();

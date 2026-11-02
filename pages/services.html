@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -18,14 +18,15 @@
 
       <div class="app-content">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px;">
-          <div style="display:flex;gap:10px;flex:1;max-width:550px;">
+          <div style="display:flex;gap:10px;flex:1;max-width:650px;align-items:center;">
             <div style="flex:1;position:relative;">
-              <input type="text" id="srv-search" class="form-control-custom" placeholder="Search services by name or code..." style="padding-left:38px;" oninput="filterServices()">
+              <input type="text" id="srv-search" class="form-control-custom" placeholder="Search services by name, code or category..." style="padding-left:38px;" oninput="filterServices()">
               <i data-lucide="search" style="position:absolute;left:12px;top:10px;width:18px;color:var(--text-light);"></i>
             </div>
-            <select id="srv-cat-filter" class="form-select-custom" style="width:180px;" onchange="filterServices()">
-              <option value="">All Categories</option>
+            <select id="srv-cat-filter" class="form-select-custom" style="width:220px;" onchange="filterServices()">
+              <option value="">All Categories (8)</option>
             </select>
+            <div id="srv-count-badge" style="font-size:0.85rem;font-weight:600;color:var(--text-muted);white-space:nowrap;"></div>
           </div>
           <div style="display:flex;gap:8px;">
             <button class="btn-secondary-custom" onclick="openPackageModal()" data-permission="services.create">
@@ -69,6 +70,9 @@
       <form id="service-form" onsubmit="handleSaveService(event)">
         <div class="modal-body-custom">
           <input type="hidden" id="srv-id">
+          <div id="srv-super-admin-note" style="display:none;margin-bottom:1rem;padding:8px 12px;background:rgba(217,70,239,0.08);border:1px solid rgba(217,70,239,0.2);border-radius:8px;font-size:0.8rem;color:var(--primary-dark);">
+            <i data-lucide="shield-check" style="width:14px;vertical-align:middle;margin-right:4px;"></i> Super Admin authorization active: Service pricing, duration, and details can be edited.
+          </div>
           <div style="margin-bottom:1rem;">
             <label class="form-label-custom">Service Name *</label>
             <input type="text" id="srv-name" class="form-control-custom" required placeholder="e.g. 24K Gold Bridal Facial">

@@ -76,6 +76,10 @@
               <div id="customer-loyalty-info" style="display:none; font-size:0.75rem; color:var(--primary-dark); font-weight:600; margin-top:4px;">
                 Loyalty Points: <span id="client-points">0</span> | Total Visits: <span id="client-visits">0</span>
               </div>
+              <div id="active-stylist-indicator" style="display:none; justify-content:space-between; align-items:center; margin-top:6px; font-size:0.75rem; color:#64748b; background:#fff8fa; border:1px solid #fce7ec; border-radius:6px; padding:3px 8px;">
+                <span style="display:flex; align-items:center;"><i data-lucide="scissors" style="width:12px; height:12px; color:#C95D7E; margin-right:4px;"></i>Logged-in Stylist: <b style="color:#1e293b; margin-left:4px;" id="active-stylist-name">-</b></span>
+                <span class="badge-custom badge-success" style="font-size:0.65rem; padding:1px 5px;">Default Assigned</span>
+              </div>
             </div>
 
             <!-- Cart Items List -->
@@ -86,47 +90,82 @@
               </div>
             </div>
 
-            <!-- Cart Summary & Checkout -->
+            <!-- Cart Summary & Checkout (Next-Level Luxury UI) -->
             <div class="cart-summary-box">
-              <div class="summary-row">
-                <span>Subtotal</span>
-                <span id="cart-subtotal">LKR 0.00</span>
+              
+              <!-- Financial Breakdown Card -->
+              <div class="luxury-summary-card">
+                <!-- Subtotal Row -->
+                <div class="summary-item-row">
+                  <span class="summary-item-label">
+                    <i data-lucide="receipt" style="width:13px;height:13px;color:#94a3b8;"></i>
+                    Subtotal (<span id="cart-items-count">0</span> items)
+                  </span>
+                  <span id="cart-subtotal" class="summary-item-val">LKR 0.00</span>
+                </div>
+
+                <!-- Modern Interactive Discount Field -->
+                <div class="summary-item-row discount-row">
+                  <div class="discount-pill-label">
+                    <i data-lucide="tag" style="width:13px;height:13px;color:#C95D7E;"></i>
+                    <span>Discount</span>
+                    <div class="discount-toggle-group">
+                      <button type="button" class="disc-toggle-btn active" id="disc-btn-fixed" onclick="setDiscountType('fixed')">LKR</button>
+                      <button type="button" class="disc-toggle-btn" id="disc-btn-percent" onclick="setDiscountType('percentage')">%</button>
+                      <input type="hidden" id="cart-discount-type" value="fixed">
+                    </div>
+                  </div>
+                  <div class="discount-input-wrapper">
+                    <input type="number" id="cart-discount-val" value="0" min="0" placeholder="0" class="discount-number-input" oninput="recalculateTotals()">
+                  </div>
+                </div>
+
+                <!-- Tax Row -->
+                <div class="summary-item-row tax-row">
+                  <span class="summary-item-label" style="font-size:0.75rem; color:#94a3b8;">
+                    <i data-lucide="percent" style="width:11px;height:11px;"></i>
+                    Tax & Levies (0%)
+                  </span>
+                  <span id="cart-tax" style="font-weight:600;font-size:0.78rem;color:#64748b;">LKR 0.00</span>
+                </div>
               </div>
 
-              <!-- Discount Input & Limit -->
-              <div class="summary-row" style="align-items:center;">
-                <span style="display:flex;align-items:center;gap:4px;">
-                  Discount
-                  <select id="cart-discount-type" style="font-size:0.75rem;padding:1px 4px;border:1px solid var(--border);border-radius:4px;" onchange="recalculateTotals()">
-                    <option value="fixed">LKR</option>
-                    <option value="percentage">%</option>
-                  </select>
-                </span>
-                <input type="number" id="cart-discount-val" value="0" min="0" style="width:75px;text-align:right;padding:2px 6px;border:1px solid var(--border);border-radius:4px;font-size:0.85rem;" oninput="recalculateTotals()">
+              <!-- Grand Total Showcase Banner -->
+              <div class="luxury-grand-total-banner">
+                <div class="grand-total-meta">
+                  <div class="grand-total-title">
+                    <span class="grand-total-dot"></span>
+                    AMOUNT TO PAY
+                  </div>
+                  <span class="grand-total-sub">Net Total Bill</span>
+                </div>
+                <div class="grand-total-price-box">
+                  <span class="currency-prefix">LKR</span>
+                  <span id="cart-grand-total" class="grand-total-num">0.00</span>
+                </div>
               </div>
 
-              <!-- Tax & Service Charge (Optional) -->
-              <div class="summary-row" style="font-size:0.8rem;color:var(--text-light);">
-                <span>Tax (0%)</span>
-                <span id="cart-tax">LKR 0.00</span>
-              </div>
-
-              <div class="summary-row total">
-                <span>Grand Total</span>
-                <span id="cart-grand-total" style="color:var(--primary-dark);">LKR 0.00</span>
-              </div>
-
+              <!-- Action Buttons -->
               <div class="cart-actions-grid">
-                <button class="btn-secondary-custom" onclick="openHoldBillModal()" style="justify-content:center;">
-                  <i data-lucide="pause"></i> Hold Bill
+                <button type="button" class="btn-pos-utility btn-hold" onclick="openHoldBillModal()" title="Place Bill on Hold">
+                  <i data-lucide="pause-circle" style="width:16px;height:16px;"></i>
+                  <span>Hold Bill</span>
                 </button>
-                <button class="btn-secondary-custom" onclick="openQuotationsDrawer()" style="justify-content:center;">
-                  <i data-lucide="file-text"></i> Load Quote
+                <button type="button" class="btn-pos-utility btn-quote" onclick="openQuotationsDrawer()" title="Load Saved Quotation">
+                  <i data-lucide="file-text" style="width:16px;height:16px;"></i>
+                  <span>Load Quote</span>
                 </button>
-                <button class="btn-checkout" onclick="openPaymentModal()">
-                  <i data-lucide="check-circle-2"></i> Charge & Checkout
+                <button type="button" class="btn-checkout-hero" id="btn-main-checkout" onclick="openPaymentModal()">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div class="checkout-icon-circle">
+                      <i data-lucide="check" style="width:16px;height:16px;stroke-width:3;"></i>
+                    </div>
+                    <span style="font-weight:800;letter-spacing:0.3px;">Charge & Checkout</span>
+                  </div>
+                  <span class="btn-checkout-badge" id="btn-checkout-amount-badge">LKR 0.00</span>
                 </button>
               </div>
+
             </div>
           </div>
         </div>
@@ -268,50 +307,58 @@
 
   <!-- RECEIPT & INVOICE PRINT PREVIEW MODAL (NEXT-LEVEL LUXURY DESIGN) -->
   <div class="modal-overlay" id="receipt-modal">
-    <div class="modal-card receipt-modal-card" style="max-width: 580px; max-height: 95vh; display:flex; flex-direction:column; border-radius: 20px; overflow:hidden; box-shadow: 0 25px 60px rgba(15, 23, 42, 0.3); border: 1px solid rgba(201, 93, 126, 0.25);">
+    <div class="modal-card receipt-modal-card">
       <!-- Header -->
-      <div class="modal-header-custom no-print" style="border-bottom:1px solid #fce7ec; padding: 1rem 1.5rem; background: linear-gradient(135deg, #ffffff 0%, #fff7fa 100%);">
+      <div class="receipt-modal-header no-print">
         <div style="display:flex; align-items:center; gap:12px;">
-          <div class="sale-success-badge">
-            <i data-lucide="check-circle-2" style="width:24px; height:24px;"></i>
+          <div class="sale-success-glow-badge">
+            <i data-lucide="check" style="width:22px; height:22px; stroke-width:3;"></i>
           </div>
           <div>
-            <h3 class="card-title-clean" style="margin:0; font-size:1.2rem; font-weight:800; color:#111827; font-family:'Playfair Display', Georgia, serif;">Sale Completed!</h3>
-            <span style="font-size:0.78rem; color:#6b7280;">Payment confirmed &bull; Receipt generated &bull; Ready to print</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <h3 style="margin:0; font-size:1.25rem; font-weight:900; color:#0f172a; font-family:'Playfair Display', Georgia, serif; letter-spacing:0.3px;">Sale Completed!</h3>
+              <span class="badge-custom badge-success" style="font-size:0.68rem; padding:2px 7px; text-transform:uppercase; font-weight:800;">Paid in Full</span>
+            </div>
+            <div style="font-size:0.8rem; color:#64748b; margin-top:2px;" id="receipt-modal-meta">
+              Payment confirmed &bull; Official tax receipt generated
+            </div>
           </div>
         </div>
-        <button class="btn-close-modal" style="background:#f3f4f6; border:none; cursor:pointer; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onclick="closeReceiptModal()"><i data-lucide="x" style="width:18px; height:18px;"></i></button>
+        <button type="button" class="btn-close-receipt-modal" onclick="closeReceiptModal()" title="Close (Esc)">
+          <i data-lucide="x" style="width:16px; height:16px;"></i>
+        </button>
       </div>
 
-      <!-- Format Switcher Tabs -->
-      <div class="no-print receipt-tab-bar" style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button id="tab-btn-a4-half" class="receipt-tab-pill" onclick="switchReceiptTab('a4-half')">
-          <i data-lucide="file-text" style="width:16px; height:16px;"></i>
-          <span>Half A4 (Landscape)</span>
-        </button>
-        <button id="tab-btn-a4-dual" class="receipt-tab-pill" onclick="switchReceiptTab('a4-dual')">
-          <i data-lucide="copy" style="width:16px; height:16px;"></i>
-          <span>2 Receipts on 1 A4</span>
-        </button>
-        <button id="tab-btn-thermal" class="receipt-tab-pill active" onclick="switchReceiptTab('thermal')">
-          <i data-lucide="receipt" style="width:16px; height:16px;"></i>
+      <!-- Segmented Format Switcher Tabs -->
+      <div class="no-print receipt-segmented-bar">
+        <button id="tab-btn-thermal" class="receipt-segment-btn active" onclick="switchReceiptTab('thermal')">
+          <i data-lucide="receipt" style="width:15px; height:15px;"></i>
           <span>80mm Thermal (POS)</span>
         </button>
+        <button id="tab-btn-a4-half" class="receipt-segment-btn" onclick="switchReceiptTab('a4-half')">
+          <i data-lucide="file-text" style="width:15px; height:15px;"></i>
+          <span>Half A4 Invoice</span>
+        </button>
+        <button id="tab-btn-a4-dual" class="receipt-segment-btn" onclick="switchReceiptTab('a4-dual')">
+          <i data-lucide="copy" style="width:15px; height:15px;"></i>
+          <span>2-in-1 Dual A4</span>
+        </button>
       </div>
 
-      <!-- Preview Body -->
-      <div class="modal-body-custom receipt-preview-body" style="padding: 1.25rem; background: #eef2f6; flex:1; overflow-y:auto; display:flex; justify-content:center;">
+      <!-- Studio Stage Preview Body -->
+      <div class="modal-body-custom receipt-preview-body">
         <div id="receipt-print-area" class="receipt-paper-stage">
           <!-- Dynamically populated luxury receipt / invoice -->
         </div>
       </div>
 
       <!-- Actions Footer -->
-      <div class="modal-footer-custom no-print" style="padding: 0.9rem 1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; background:#ffffff; border-top:1px solid #f3f4f6;">
-        <button class="btn-secondary-custom" onclick="closeReceiptModal()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.15rem; border-radius:10px; display:inline-flex; align-items:center; gap:6px;">
-          <i data-lucide="plus" style="width:16px; height:16px;"></i> New Sale
+      <div class="receipt-modal-footer no-print">
+        <button type="button" class="btn-new-sale-action" onclick="closeReceiptModal()">
+          <i data-lucide="plus-circle" style="width:16px; height:16px;"></i>
+          <span>New Sale</span>
         </button>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;" id="receipt-action-buttons">
+        <div class="receipt-action-group" id="receipt-action-buttons">
           <!-- Populated based on active tab -->
         </div>
       </div>

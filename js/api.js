@@ -1,11 +1,57 @@
 /**
  * SALON VELLORA — API CLIENT
  * Centralized REST API communication with automatic Authorization token handling
+ * Configured for production cloud API: http://api.salonvellora.com.lk/
  */
 
-const API_BASE_URL = window.SALON_API_URL || "http://127.0.0.1:8000/api";
+const DEFAULT_API_BASE_URL = "http://api.salonvellora.com.lk/api";
+
+function resolveApiBaseUrl() {
+  const storedUrl = typeof localStorage !== "undefined" ? localStorage.getItem("salon_api_url") : null;
+  let url = (typeof window !== "undefined" && window.SALON_API_URL) || storedUrl || DEFAULT_API_BASE_URL;
+  url = String(url).trim().replace(/\/+$/, "");
+  // Ensure the route prefix '/api' is present for Laravel REST routes if not already in URL
+  if (!url.endsWith("/api")) {
+    url = `${url}/api`;
+  }
+  return url;
+}
 
 const api = {
+  getBaseUrl() {
+    return resolveApiBaseUrl();
+  },
+
+  setBaseUrl(newUrl) {
+    if (typeof localStorage === "undefined") return;
+    if (newUrl) {
+      localStorage.setItem("salon_api_url", newUrl);
+    } else {
+      localStorage.removeItem("salon_api_url");
+    }
+  },
+
+  resetBaseUrl() {
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem("salon_api_url");
+    }
+  },
+
+  buildUrl(endpoint) {
+    if (endpoint.startsWith("http://") || endpoint.startsWith("https://")) {
+      return endpoint;
+    }
+    const base = resolveApiBaseUrl();
+    const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+
+    // Prevent duplicate /api if endpoint already starts with /api
+    if (cleanEndpoint.startsWith("/api/") && base.endsWith("/api")) {
+      return `${base.slice(0, -4)}${cleanEndpoint}`;
+    }
+
+    return `${base}${cleanEndpoint}`;
+  },
+
   getToken() {
     return localStorage.getItem("salon_token");
   },
@@ -19,7 +65,7 @@ const api = {
   },
 
   async request(endpoint, options = {}) {
-    const url = endpoint.startsWith("http") ? endpoint : `${API_BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
+    const url = this.buildUrl(endpoint);
     
     const headers = {
       "Content-Type": "application/json",
@@ -60,7 +106,7 @@ const api = {
 
       return data;
     } catch (err) {
-      console.error(`API Error [${endpoint}]:`, err);
+      console.error(`API Error [${endpoint}] -> [${url}]:`, err);
       throw err;
     }
   },

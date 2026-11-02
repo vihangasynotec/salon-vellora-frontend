@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadStaffList();
   loadHeldBillsCount();
   recalculateTotals();
+  if (window.lucide) lucide.createIcons();
 
   // Check if opened with quotation parameter (?load_quotation=ID)
   const urlParams = new URLSearchParams(window.location.search);
@@ -135,11 +136,81 @@ async function loadPosCatalog() {
   }
 }
 
+/**
+ * Automatically resolves the default stylist ID matching the logged-in user account
+ * Checks user.staff_id, staff.user_id, exact/partial staff name, and email
+ */
+function getDefaultStylistId() {
+  const currentUser = (typeof auth !== 'undefined' && auth.getUser) ? auth.getUser() : null;
+  if (!currentUser || !allStaff || allStaff.length === 0) return null;
+
+  // 1. Direct staff_id on user object
+  if (currentUser.staff_id) {
+    const found = allStaff.find(s => s.id === Number(currentUser.staff_id));
+    if (found) return found.id;
+  }
+
+  // 2. By staff.user_id matching currentUser.id
+  const matchByUserId = allStaff.find(s => s.user_id && Number(s.user_id) === Number(currentUser.id));
+  if (matchByUserId) return matchByUserId.id;
+
+  // 3. Exact name match (case-insensitive)
+  if (currentUser.name) {
+    const curName = currentUser.name.trim().toLowerCase();
+    const matchByName = allStaff.find(s => s.name && s.name.trim().toLowerCase() === curName);
+    if (matchByName) return matchByName.id;
+
+    // Partial/word match (e.g., "Bhagya" or "Sewwandi")
+    const matchByPart = allStaff.find(s => {
+      const sName = (s.name || '').trim().toLowerCase();
+      if (!sName) return false;
+      return curName.includes(sName) || sName.includes(curName);
+    });
+    if (matchByPart) return matchByPart.id;
+  }
+
+  // 4. By email match
+  if (currentUser.email) {
+    const curEmail = currentUser.email.trim().toLowerCase();
+    const matchByEmail = allStaff.find(s => s.email && s.email.trim().toLowerCase() === curEmail);
+    if (matchByEmail) return matchByEmail.id;
+  }
+
+  return null;
+}
+
 async function loadStaffList() {
   try {
     const res = await api.get("/staff");
     if (res.success && res.data) {
       allStaff = res.data;
+      
+      const defId = getDefaultStylistId();
+      const indicator = document.getElementById("active-stylist-indicator");
+      const nameEl = document.getElementById("active-stylist-name");
+
+      if (defId) {
+        const matched = allStaff.find(s => s.id === defId);
+        if (matched && nameEl) {
+          nameEl.innerText = matched.name;
+          if (indicator) indicator.style.display = "flex";
+        }
+
+        // Auto-assign default stylist to any items in cart that don't have one yet
+        currentCart.items.forEach(it => {
+          if ((it.item_type === 'service' || it.item_type === 'package') && !it.staff_id) {
+            it.staff_id = defId;
+          }
+        });
+        renderCartItems();
+      } else {
+        const u = (typeof auth !== 'undefined' && auth.getUser) ? auth.getUser() : null;
+        if (u && nameEl) {
+          nameEl.innerText = u.name;
+          if (indicator) indicator.style.display = "flex";
+        }
+      }
+      if (window.lucide) lucide.createIcons();
     }
   } catch (err) {
     console.warn("Could not load staff for POS stylist assignment:", err);
@@ -207,6 +278,98 @@ function renderCategoryPills(categories) {
 }
 
 let activeCategoryFilter = 'all';
+let lastFilteredItems = [];
+
+/**
+ * Builds a comprehensive search string from any catalog item (Service, Package, Product, Rental)
+ * Handles nested objects (category, brand) safely without TypeError
+ */
+function getItemSearchableString(item) {
+  const parts = [];
+  if (item.name) parts.push(String(item.name));
+  if (item.code) parts.push(String(item.code));
+  if (item.sku) parts.push(String(item.sku));
+  if (item.barcode) parts.push(String(item.barcode));
+  
+  // Category Name (string or object)
+  if (item.category_name) {
+    parts.push(String(item.category_name));
+  }
+  if (typeof item.category === 'string') {
+    parts.push(item.category);
+  } else if (item.category && typeof item.category === 'object' && item.category.name) {
+    parts.push(String(item.category.name));
+  }
+
+  // Brand Name (string or object)
+  if (typeof item.brand === 'string') {
+    parts.push(item.brand);
+  } else if (item.brand && typeof item.brand === 'object' && item.brand.name) {
+    parts.push(String(item.brand.name));
+  }
+
+  // Type (service, package, product, rental)
+  if (item.type) {
+    parts.push(String(item.type));
+  }
+
+  // Numerical Price
+  if (item.display_price !== undefined && item.display_price !== null) {
+    parts.push(String(Math.round(item.display_price)));
+  }
+
+  return parts.join(' ').toLowerCase();
+}
+
+function clearPosSearch() {
+  const searchInput = document.getElementById("pos-search");
+  if (searchInput) {
+    searchInput.value = "";
+    searchInput.focus();
+  }
+  const clearBtn = document.getElementById("pos-search-clear");
+  if (clearBtn) clearBtn.style.display = "none";
+  filterPosItems();
+}
+
+function handlePosSearchKeydown(event) {
+  if (event.key === 'Escape') {
+    clearPosSearch();
+    return;
+  }
+
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    const query = (document.getElementById("pos-search").value || "").trim();
+    if (!query) return;
+
+    const allItems = getAllCatalogItems();
+    const queryLower = query.toLowerCase();
+
+    // 1. Direct exact match on barcode or sku or code (vital for high-speed barcode scanners)
+    const exactMatch = allItems.find(i => 
+      (i.barcode && String(i.barcode).toLowerCase() === queryLower) ||
+      (i.sku && String(i.sku).toLowerCase() === queryLower) ||
+      (i.code && String(i.code).toLowerCase() === queryLower)
+    );
+
+    if (exactMatch) {
+      addItemToCart(exactMatch.type, exactMatch.id);
+      common.showToast(`Added '${exactMatch.name}' to bill!`, "success", 2000);
+      clearPosSearch();
+      return;
+    }
+
+    // 2. If exactly one item is matched by the search filter, add it directly to cart
+    if (lastFilteredItems && lastFilteredItems.length === 1) {
+      const singleItem = lastFilteredItems[0];
+      addItemToCart(singleItem.type, singleItem.id);
+      common.showToast(`Added '${singleItem.name}' to bill!`, "success", 2000);
+      clearPosSearch();
+      return;
+    }
+  }
+}
 
 function selectCategory(filterKey, buttonEl) {
   activeCategoryFilter = filterKey;
@@ -216,43 +379,68 @@ function selectCategory(filterKey, buttonEl) {
 }
 
 function filterPosItems() {
-  const query = (document.getElementById("pos-search").value || "").toLowerCase().trim();
-  let items = getAllCatalogItems();
+  const searchInput = document.getElementById("pos-search");
+  const query = (searchInput ? searchInput.value : "").trim();
+  const clearBtn = document.getElementById("pos-search-clear");
+  if (clearBtn) {
+    clearBtn.style.display = query ? "block" : "none";
+  }
+
+  const allItems = getAllCatalogItems();
+  let categoryFiltered = allItems;
 
   if (activeCategoryFilter === 'services') {
-    items = items.filter(i => i.type === 'service');
+    categoryFiltered = allItems.filter(i => i.type === 'service');
   } else if (activeCategoryFilter === 'packages') {
-    items = items.filter(i => i.type === 'package');
+    categoryFiltered = allItems.filter(i => i.type === 'package');
   } else if (activeCategoryFilter === 'products') {
-    items = items.filter(i => i.type === 'product');
+    categoryFiltered = allItems.filter(i => i.type === 'product');
   } else if (activeCategoryFilter === 'rentals') {
-    items = items.filter(i => i.type === 'rental');
+    categoryFiltered = allItems.filter(i => i.type === 'rental');
   } else if (activeCategoryFilter.startsWith('cat_')) {
     const catId = parseInt(activeCategoryFilter.replace('cat_', ''));
-    items = items.filter(i => i.type === 'service' && i.category_id === catId);
+    categoryFiltered = allItems.filter(i => i.type === 'service' && i.category_id === catId);
   }
+
+  let finalItems = categoryFiltered;
 
   if (query) {
-    items = items.filter(i => 
-      i.name.toLowerCase().includes(query) ||
-      (i.code && i.code.toLowerCase().includes(query)) ||
-      (i.barcode && i.barcode.toLowerCase().includes(query)) ||
-      (i.sku && i.sku.toLowerCase().includes(query)) ||
-      (i.category && i.category.toLowerCase().includes(query))
-    );
+    const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+    let matches = categoryFiltered.filter(item => {
+      const text = getItemSearchableString(item);
+      return terms.every(term => text.includes(term));
+    });
+
+    // Smart fallback: If no matches inside active category, search across the entire catalog!
+    if (matches.length === 0 && activeCategoryFilter !== 'all') {
+      const globalMatches = allItems.filter(item => {
+        const text = getItemSearchableString(item);
+        return terms.every(term => text.includes(term));
+      });
+      if (globalMatches.length > 0) {
+        matches = globalMatches;
+      }
+    }
+
+    finalItems = matches;
   }
 
-  renderPosItems(items);
+  lastFilteredItems = finalItems;
+  renderPosItems(finalItems);
 }
 
 function renderPosItems(items) {
   const container = document.getElementById("pos-items-container");
+  const searchInput = document.getElementById("pos-search");
+  const query = (searchInput ? searchInput.value : "").trim();
+
   if (!items || items.length === 0) {
     container.innerHTML = `
       <div style="grid-column: 1/-1; text-align:center; padding: 3rem; color: var(--text-muted);">
         <i data-lucide="package-search" style="width:36px;height:36px;margin-bottom:8px;color:var(--text-light);"></i>
-        <p style="margin:0;font-weight:600;color:#374151;">No items found</p>
-        <p style="font-size:0.8rem;margin-top:4px;">Try selecting another category or clearing your search.</p>
+        <p style="margin:0;font-weight:600;color:#374151;">${query ? `No items found matching "${escapeHtml(query)}"` : 'No items found'}</p>
+        <p style="font-size:0.8rem;margin-top:4px;">${query ? 'Check spelling, try another keyword, or clear your search.' : 'Try selecting another category.'}</p>
+        ${query ? `<button class="btn-secondary-custom" style="margin-top:10px;padding:6px 14px;font-size:0.8rem;" onclick="clearPosSearch()"><i data-lucide="x" style="width:13px;margin-right:4px;"></i> Clear Search</button>` : ''}
       </div>`;
     if (window.lucide) lucide.createIcons();
     return;
@@ -364,9 +552,14 @@ function addItemToCart(type, id) {
     }
   }
 
+  const defaultStaffId = (type === 'service' || type === 'package') ? getDefaultStylistId() : null;
+
   const existingIndex = currentCart.items.findIndex(i => i.item_type === type && i.item_id === id);
   if (existingIndex > -1) {
     currentCart.items[existingIndex].quantity += 1;
+    if (!currentCart.items[existingIndex].staff_id && defaultStaffId) {
+      currentCart.items[existingIndex].staff_id = defaultStaffId;
+    }
   } else {
     currentCart.items.push({
       item_type: type,
@@ -376,7 +569,7 @@ function addItemToCart(type, id) {
       deposit_amount: parseFloat(sourceItem.security_deposit || 0),
       duration_hours: 24,
       quantity: 1,
-      staff_id: null,
+      staff_id: defaultStaffId,
       discount_amount: 0,
     });
   }
@@ -451,9 +644,12 @@ function renderCartItems() {
   const container = document.getElementById("cart-items-container");
   if (currentCart.items.length === 0) {
     container.innerHTML = `
-      <div style="text-align:center; padding: 4rem 1rem; color: var(--text-muted);">
-        <i data-lucide="shopping-cart" style="width:40px;height:40px;color:var(--border);margin-bottom:8px;"></i>
-        <p style="font-size:0.85rem;">Cart is empty.<br>Tap any service, package or rental item to add.</p>
+      <div style="text-align:center; padding: 4.5rem 1rem; color: var(--text-muted);">
+        <div style="width:52px; height:52px; border-radius:50%; background:#fff5f8; border:1px dashed #fce7ec; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px;">
+          <i data-lucide="shopping-bag" style="width:24px;height:24px;color:#C95D7E;"></i>
+        </div>
+        <p style="font-weight:700; font-size:0.95rem; color:#1e293b; margin:0;">Current Bill is Empty</p>
+        <p style="font-size:0.8rem; color:#64748b; margin-top:4px;">Tap any service, package, or retail product to start billing.</p>
       </div>
     `;
     if (window.lucide) lucide.createIcons();
@@ -461,43 +657,85 @@ function renderCartItems() {
   }
 
   container.innerHTML = currentCart.items.map((item, idx) => {
-    let staffSelect = '';
-    if (item.item_type === 'service' || item.item_type === 'package') {
-      staffSelect = `
-        <select class="form-select-custom" style="font-size:0.72rem;padding:2px 4px;height:26px;width:125px;" onchange="updateItemStaff(${idx}, this.value)">
-          <option value="">Stylist...</option>
-          ${allStaff.map(s => `<option value="${s.id}" ${item.staff_id === s.id ? 'selected' : ''}>${s.name}</option>`).join("")}
-        </select>
-      `;
+    let typeBadgeClass = 'badge-primary';
+    let typeIcon = 'scissors';
+    let typeLabel = 'Service';
+
+    if (item.item_type === 'package') {
+      typeBadgeClass = 'badge-purple';
+      typeIcon = 'crown';
+      typeLabel = 'Package';
+    } else if (item.item_type === 'product') {
+      typeBadgeClass = 'badge-success';
+      typeIcon = 'package';
+      typeLabel = 'Retail Product';
+    } else if (item.item_type === 'rental') {
+      typeBadgeClass = 'badge-warning';
+      typeIcon = 'gem';
+      typeLabel = '24h Rental';
     }
 
     const itemTotal = (item.unit_price * item.quantity) - (item.discount_amount || 0);
 
     return `
-      <div class="cart-item-row">
-        <div class="cart-item-top">
-          <div>
-            <div class="cart-item-title">${item.name}</div>
-            ${item.item_type === 'rental' ? `
-              <div style="font-size:0.72rem; color:#c2410c; font-weight:700; margin-top:2px; display:flex; align-items:center; gap:4px;">
-                <i data-lucide="gem" style="width:11px;height:11px;"></i> 24h Rental &bull; Deposit: ${common.formatCurrency(item.deposit_amount || 0)}
-              </div>` : ''}
-          </div>
-          <div class="cart-item-del" onclick="removeItemFromCart(${idx})">
-            <i data-lucide="x" style="width:16px;height:16px;"></i>
-          </div>
-        </div>
-        <div class="cart-item-controls">
-          <div style="display:flex;align-items:center;gap:6px;">
-            <div class="qty-control">
-              <button class="qty-btn" onclick="updateItemQuantity(${idx}, -1)">-</button>
-              <input type="text" class="qty-input" value="${item.quantity}" readonly>
-              <button class="qty-btn" onclick="updateItemQuantity(${idx}, 1)">+</button>
+      <div class="cart-item-card">
+        <!-- Top Row: Badge, Title & Delete -->
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px; flex-wrap:wrap;">
+              <span class="badge-custom ${typeBadgeClass}" style="font-size:0.65rem; padding:1.5px 6px; font-weight:700; border-radius:4px; text-transform:uppercase; letter-spacing:0.4px;">
+                <i data-lucide="${typeIcon}" style="width:10px;height:10px;margin-right:3px;vertical-align:-1px;"></i>${typeLabel}
+              </span>
+              ${item.item_type === 'rental' ? `
+                <span style="font-size:0.68rem; color:#b45309; font-weight:700; background:#fffbeb; border:1px solid #fde68a; padding:1px 5px; border-radius:4px;">
+                  Deposit: ${common.formatCurrency(item.deposit_amount || 0)}
+                </span>` : ''}
             </div>
-            ${staffSelect}
+            <div class="cart-item-title" title="${escapeHtml(item.name)}">
+              ${escapeHtml(item.name)}
+            </div>
           </div>
-          <div style="font-weight:700;font-size:0.88rem;color:var(--primary-dark);">
-            ${common.formatCurrency(itemTotal)}
+
+          <button type="button" class="cart-item-del-btn" onclick="removeItemFromCart(${idx})" title="Remove item">
+            <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+          </button>
+        </div>
+
+        <!-- Middle Row: Stylist Selector (Only for Services & Packages) -->
+        ${(item.item_type === 'service' || item.item_type === 'package') ? `
+          <div class="cart-stylist-pill">
+            <span style="color:#C95D7E; display:flex; align-items:center; gap:4px; font-size:0.73rem; font-weight:700; flex-shrink:0;">
+              <i data-lucide="scissors" style="width:12px; height:12px;"></i> Stylist:
+            </span>
+            <select class="form-select-custom cart-stylist-select" style="font-size:0.78rem; font-weight:600; padding:2px 4px; height:26px; border:none; background:transparent; color:#1e293b; width:100%; cursor:pointer; outline:none;" onchange="updateItemStaff(${idx}, this.value)">
+              <option value="">Choose Stylist...</option>
+              ${allStaff.map(s => `
+                <option value="${s.id}" ${item.staff_id === s.id ? 'selected' : ''}>
+                  ${escapeHtml(s.name)}${s.specialization ? ` (${escapeHtml(s.specialization)})` : ''}
+                </option>
+              `).join("")}
+            </select>
+          </div>
+        ` : ''}
+
+        <!-- Bottom Row: Stepper, Unit Rate & Line Total -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:6px; border-top:1px dashed #fce7ec; margin-top:${(item.item_type === 'service' || item.item_type === 'package') ? '0' : '8px'};">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="qty-control">
+              <button type="button" class="qty-btn" onclick="updateItemQuantity(${idx}, -1)" title="Decrease quantity">−</button>
+              <input type="text" class="qty-input" value="${item.quantity}" readonly>
+              <button type="button" class="qty-btn" onclick="updateItemQuantity(${idx}, 1)" title="Increase quantity">+</button>
+            </div>
+            ${item.quantity > 1 ? `
+              <span style="font-size:0.72rem; color:#64748b; font-weight:600;">
+                @ ${common.formatCurrency(item.unit_price)}
+              </span>` : ''}
+          </div>
+
+          <div style="text-align:right;">
+            <div style="font-weight:900; font-size:0.95rem; color:#0f172a; letter-spacing:0.2px;">
+              ${common.formatCurrency(itemTotal)}
+            </div>
           </div>
         </div>
       </div>
@@ -507,14 +745,38 @@ function renderCartItems() {
   if (window.lucide) lucide.createIcons();
 }
 
+function setDiscountType(type) {
+  const hiddenInput = document.getElementById("cart-discount-type");
+  const btnFixed = document.getElementById("disc-btn-fixed");
+  const btnPercent = document.getElementById("disc-btn-percent");
+
+  if (hiddenInput) hiddenInput.value = type;
+
+  if (btnFixed && btnPercent) {
+    if (type === 'fixed') {
+      btnFixed.classList.add("active");
+      btnPercent.classList.remove("active");
+    } else {
+      btnPercent.classList.add("active");
+      btnFixed.classList.remove("active");
+    }
+  }
+
+  recalculateTotals();
+}
+
 function recalculateTotals() {
   let subtotal = 0;
+  let totalItemsCount = 0;
   currentCart.items.forEach(item => {
-    subtotal += (item.unit_price * item.quantity) - (item.discount_amount || 0);
+    const qty = item.quantity || 1;
+    totalItemsCount += qty;
+    subtotal += (item.unit_price * qty) - (item.discount_amount || 0);
   });
 
-  const discType = document.getElementById("cart-discount-type").value;
-  const discVal = parseFloat(document.getElementById("cart-discount-val").value) || 0;
+  const discTypeEl = document.getElementById("cart-discount-type");
+  const discType = discTypeEl ? discTypeEl.value : 'fixed';
+  const discVal = parseFloat(document.getElementById("cart-discount-val")?.value) || 0;
 
   let discountAmount = 0;
   if (discType === 'percentage') {
@@ -535,9 +797,25 @@ function recalculateTotals() {
   currentCart.tax_percentage = 0;
   currentCart.grand_total = grandTotal;
 
-  document.getElementById("cart-subtotal").innerText = common.formatCurrency(subtotal);
-  document.getElementById("cart-tax").innerText = common.formatCurrency(taxAmount);
-  document.getElementById("cart-grand-total").innerText = common.formatCurrency(grandTotal);
+  // Format numbers nicely
+  const subtotalEl = document.getElementById("cart-subtotal");
+  if (subtotalEl) subtotalEl.innerText = common.formatCurrency(subtotal);
+
+  const itemsCountEl = document.getElementById("cart-items-count");
+  if (itemsCountEl) itemsCountEl.innerText = totalItemsCount;
+
+  const taxEl = document.getElementById("cart-tax");
+  if (taxEl) taxEl.innerText = common.formatCurrency(taxAmount);
+
+  const grandTotalEl = document.getElementById("cart-grand-total");
+  if (grandTotalEl) {
+    grandTotalEl.innerText = grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  const checkoutBadge = document.getElementById("btn-checkout-amount-badge");
+  if (checkoutBadge) {
+    checkoutBadge.innerText = common.formatCurrency(grandTotal);
+  }
 }
 
 // Payment Modal & Methods (Next-Level Luxury UX)
@@ -805,6 +1083,16 @@ let currentReceiptFormat = 'thermal';
 function showReceiptModal(sale) {
   lastCompletedSale = sale;
   currentReceiptFormat = 'thermal';
+
+  // Populate dynamic header subtitle
+  const metaEl = document.getElementById("receipt-modal-meta");
+  if (metaEl && sale) {
+    const invNum = sale.invoice_number || `SV-INV-${sale.id}`;
+    const total = common.formatCurrency(sale.grand_total || 0);
+    const method = (sale.payment_method || 'Cash').toUpperCase();
+    metaEl.innerHTML = `Invoice: <b style="color:#0f172a; font-family:monospace;">${invNum}</b> &bull; Paid <b style="color:#059669;">${total}</b> via ${method}`;
+  }
+
   renderReceiptPreview();
   document.getElementById("receipt-modal").classList.add("active");
   if (window.lucide) lucide.createIcons();
@@ -839,44 +1127,57 @@ function renderReceiptPreview() {
   const container = document.getElementById("receipt-print-area");
   const actionsContainer = document.getElementById("receipt-action-buttons");
 
+  // Scroll preview back to top so header/logo is always immediately visible
+  const previewBody = document.querySelector(".receipt-preview-body");
+  if (previewBody) previewBody.scrollTop = 0;
+
   if (currentReceiptFormat === 'thermal') {
     container.innerHTML = PrintEngine.generateThermalReceipt(lastCompletedSale);
     actionsContainer.innerHTML = `
-      <button class="btn-whatsapp" onclick="handleShareReceiptWhatsApp()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px;">
-        <i data-lucide="message-circle" style="width:16px; height:16px;"></i> Share on WhatsApp
+      <button type="button" class="btn-receipt-action btn-wa" onclick="handleShareReceiptWhatsApp()">
+        <i data-lucide="message-circle" style="width:15px; height:15px;"></i>
+        <span>Share WhatsApp</span>
       </button>
-      <button class="btn-secondary-custom" onclick="handleDownloadReceiptPdf()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px;">
-        <i data-lucide="download" style="width:16px; height:16px;"></i> Download Receipt (PDF)
+      <button type="button" class="btn-receipt-action btn-pdf" onclick="handleDownloadReceiptPdf()">
+        <i data-lucide="download" style="width:15px; height:15px;"></i>
+        <span>Download PDF</span>
       </button>
-      <button class="btn-primary-custom" onclick="handlePrintReceipt()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(201,93,126,0.35);">
-        <i data-lucide="printer" style="width:16px; height:16px;"></i> Print 80mm Receipt
+      <button type="button" class="btn-receipt-action btn-print" onclick="handlePrintReceipt()">
+        <i data-lucide="printer" style="width:15px; height:15px;"></i>
+        <span>Print Receipt</span>
       </button>
     `;
   } else if (currentReceiptFormat === 'a4-dual') {
     container.innerHTML = PrintEngine.generateDualA4Invoice(lastCompletedSale);
     actionsContainer.innerHTML = `
-      <button class="btn-whatsapp" onclick="handleShareReceiptWhatsApp()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px;">
-        <i data-lucide="message-circle" style="width:16px; height:16px;"></i> Share on WhatsApp
+      <button type="button" class="btn-receipt-action btn-wa" onclick="handleShareReceiptWhatsApp()">
+        <i data-lucide="message-circle" style="width:15px; height:15px;"></i>
+        <span>Share WhatsApp</span>
       </button>
-      <button class="btn-secondary-custom" onclick="handleDownloadDualA4Pdf()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px;">
-        <i data-lucide="download" style="width:16px; height:16px;"></i> Download 2-in-1 A4 (PDF)
+      <button type="button" class="btn-receipt-action btn-pdf" onclick="handleDownloadDualA4Pdf()">
+        <i data-lucide="download" style="width:15px; height:15px;"></i>
+        <span>Download PDF</span>
       </button>
-      <button class="btn-primary-custom" onclick="handlePrintDualA4()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(201,93,126,0.35);">
-        <i data-lucide="printer" style="width:16px; height:16px;"></i> Print 2 Receipts on 1 A4
+      <button type="button" class="btn-receipt-action btn-print" onclick="handlePrintDualA4()">
+        <i data-lucide="printer" style="width:15px; height:15px;"></i>
+        <span>Print 2-in-1 A4</span>
       </button>
     `;
   } else {
     // Default: Half-A4 (Landscape)
     container.innerHTML = PrintEngine.generateA4Invoice(lastCompletedSale, "HALF A4 TAX INVOICE", false);
     actionsContainer.innerHTML = `
-      <button class="btn-whatsapp" onclick="handleShareReceiptWhatsApp()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px;">
-        <i data-lucide="message-circle" style="width:16px; height:16px;"></i> Share on WhatsApp
+      <button type="button" class="btn-receipt-action btn-wa" onclick="handleShareReceiptWhatsApp()">
+        <i data-lucide="message-circle" style="width:15px; height:15px;"></i>
+        <span>Share WhatsApp</span>
       </button>
-      <button class="btn-secondary-custom" onclick="handleDownloadA4Pdf()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px;">
-        <i data-lucide="download" style="width:16px; height:16px;"></i> Download Half A4 (PDF)
+      <button type="button" class="btn-receipt-action btn-pdf" onclick="handleDownloadA4Pdf()">
+        <i data-lucide="download" style="width:15px; height:15px;"></i>
+        <span>Download PDF</span>
       </button>
-      <button class="btn-primary-custom" onclick="handlePrintA4()" style="font-size:0.88rem; font-weight:700; padding:0.65rem 1.25rem; border-radius:10px; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(201,93,126,0.35);">
-        <i data-lucide="printer" style="width:16px; height:16px;"></i> Print Half A4 (Landscape)
+      <button type="button" class="btn-receipt-action btn-print" onclick="handlePrintA4()">
+        <i data-lucide="printer" style="width:15px; height:15px;"></i>
+        <span>Print Half A4</span>
       </button>
     `;
   }
@@ -899,8 +1200,8 @@ function handlePrintReceipt() {
 function handleDownloadReceiptPdf() {
   if (!lastCompletedSale) return;
   const container = document.getElementById("receipt-print-area");
-  const target = (container && container.firstElementChild) ? container.firstElementChild : PrintEngine.generateThermalReceipt(lastCompletedSale);
-  PrintEngine.downloadAsPdf(target, `Salon_Vellora_Receipt_${lastCompletedSale.invoice_number}.pdf`, true);
+  const html = PrintEngine.generateThermalReceipt(lastCompletedSale);
+  PrintEngine.downloadAsPdf(html, `Salon_Vellora_Receipt_${lastCompletedSale.invoice_number}.pdf`, true);
 }
 
 function handlePrintA4() {
